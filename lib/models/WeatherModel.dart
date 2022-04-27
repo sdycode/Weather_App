@@ -13,8 +13,9 @@ class WeatherModel {
   late double dew;
   late double pressure;
   late double humidity;
-  
+
   late double windspeed;
+  late double time;
 
   WeatherModel(
     this.descrp,
@@ -23,7 +24,7 @@ class WeatherModel {
     this.dew,
     this.pressure,
     this.humidity,
-   
     this.windspeed,
+    this.time
   );
 }

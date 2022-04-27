@@ -7,10 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 import 'package:weather/models/citymodel.dart';
 import 'package:weather/screens/main_screen.dart';
-
-
 
 import '../constants/constants.dart';
 import '../constants/sizes.dart';
@@ -64,11 +64,9 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
     'Dew Point',
     'Pressure',
     'Humidity',
-    'Visibility',
     'Wind Speed'
   ];
   List<String> parametervalue = [
-    '-',
     '-',
     '-',
     '-',
@@ -100,19 +98,18 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
     // TODO: implement initState
     super.initState();
 
-    // var keyboardVisibilityController = KeyboardVisibilityController();
-    // // Query
-    // print(
-    //     'Keyboard visibility direct query: ${keyboardVisibilityController.isVisible}');
-
-    // // Subscribe
-    // keyboardSubscription =
-    //     keyboardVisibilityController.onChange.listen((bool visible) {
-    //   print('Keyboard visibility update. Is visible: $visible');
-
-    //   changeUI(visible);
-    // });
+    ;
   }
+
+  List<List<double>> sampledata = [
+    [10, 100],
+      [20, 150],
+
+        [30, 80],
+          [40, 210],
+            [50, 160]
+
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -251,6 +248,7 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
           long = responseData[0]['lon'].toString();
           String oneapicallurl =
               "https://api.openweathermap.org/data/2.5/onecall?lat=$lat&lon=$long&appid=${Constants.apikey2}";
+          // https://api.openweathermap.org/data/2.5/onecall?lat=20.0112475&lon=73.7902364&appid=2b16938a6e324e1cfe9a09b08fae6d53
           print('url - $oneapicallurl');
 
           final oneapiresponse = await http.get(Uri.parse(oneapicallurl));
@@ -271,7 +269,8 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
               cityData2.current.dewPodouble - 273.15,
               cityData2.current.pressure,
               cityData2.current.humidity,
-              cityData2.current.windSpeed);
+              cityData2.current.windSpeed,
+              cityData2.current.dt);
 
           List<WeatherModel> hourlymodels = [];
           List<WeatherModel> dailymodels = [];
@@ -284,7 +283,8 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                 cityData2.hourly[i].dewPodouble - 273.15,
                 cityData2.hourly[i].pressure,
                 cityData2.hourly[i].humidity,
-                cityData2.hourly[i].windSpeed);
+                cityData2.hourly[i].windSpeed,
+                cityData2.hourly[i].dt);
 
             hourlymodels.add(hourlytempmodel);
           }
@@ -297,9 +297,10 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                 cityData2.daily[i].dewPodouble - 273.15,
                 cityData2.daily[i].pressure,
                 cityData2.daily[i].humidity,
-                cityData2.daily[i].windSpeed);
+                cityData2.daily[i].windSpeed,
+                cityData2.daily[i].dt);
 
-            hourlymodels.add(dailyTempModel);
+            dailymodels.add(dailyTempModel);
           }
 
           // providerClass.addHourlyWeatherModel(weatherModel, cityNo)
@@ -484,7 +485,6 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                   animatedWidget(2),
                   animatedWidget(3),
                   animatedWidget(4),
-                  animatedWidget(5),
 
                   // Row(
                   //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -523,7 +523,115 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
   }
 
   Widget hourlyWeather() {
-    return Container();
+    double h = Sizes().sh * (1 - 0.08 - 0.06 - 0.05);
+    double chiph = Sizes().sh * (1 - 0.08 - 0.06 - 0.05) * 0.06;
+    return Container(
+        height: h,
+        color: Constants.currentMainColor,
+        child: Column(
+          children: [
+            Container(
+              height: chiph + h * 0.02,
+              child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: parameternames.length,
+                  itemBuilder: (c, i) {
+                    return InkWell(
+                      onTap: () {
+                        providerClass.sethourlyChipIndex(i);
+                      },
+                      child: Container(
+                        height: chiph,
+                        margin: EdgeInsets.all(h * 0.01),
+                        padding: providerClass.hourlyChipIndex == i
+                            ? EdgeInsets.all(h * 0.008)
+                            : EdgeInsets.all(h * 0.012),
+                        decoration: BoxDecoration(
+                            border: providerClass.hourlyChipIndex == i
+                                ? Border.all(width: 1, color: Colors.black45)
+                                : null,
+                            color: Constants.cardcolors[i],
+                            borderRadius: BorderRadius.circular(h * 0.05),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.grey.withAlpha(150),
+                                  blurRadius: 1.5,
+                                  offset: Offset(1, 1))
+                            ]),
+                        child: FittedBox(
+                          fit: BoxFit.fitHeight,
+                          child: Text(
+                            parameternames[i],
+                            style: TextStyle(color: Colors.black),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+            ),
+              SfCartesianChart(
+              primaryXAxis: CategoryAxis(),
+              // Chart title
+              title: ChartTitle(text: 'Half yearly sales analysis'),
+              // Enable legend
+              legend: Legend(isVisible: true),
+              // Enable tooltip
+              tooltipBehavior: TooltipBehavior(enable: true),
+              // series: <ChartSeries<_SalesData, String>>[
+              //   LineSeries<_SalesData, String>(
+              //       dataSource: data,
+              //       xValueMapper: (_SalesData sales, _) => sales.year,
+              //       yValueMapper: (_SalesData sales, _) => sales.sales,
+              //       name: 'Sales',
+              //       // Enable data label
+              //       dataLabelSettings: DataLabelSettings(isVisible: true))
+              // ]
+              ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                //Initialize the spark charts widget
+                child: SfSparkBarChart.custom(
+                  
+                  //Enable the trackball
+                  trackball: SparkChartTrackball(
+                      activationMode: SparkChartActivationMode.tap),
+                  //Enable marker
+                  // marker: SparkChartMarker(
+                  //     displayMode: SparkChartMarkerDisplayMode.all),
+                  //Enable data label
+                  labelDisplayMode: SparkChartLabelDisplayMode.all,
+                  xValueMapper: (int index) =>
+                  providerClass.cityModels.isEmpty? sampledata[index][0] :
+                   providerClass
+                      .cityModels[0].hourlyWeatherModels[index].time,
+                  yValueMapper: (int index) => 
+                  providerClass.cityModels.isEmpty? sampledata[index][1] :
+                  providerClass
+                      .cityModels[0].hourlyWeatherModels[index].temp,
+                  dataCount:
+                    providerClass.cityModels.isEmpty? sampledata.length :  providerClass.cityModels[0].hourlyWeatherModels.length,
+                ),
+              ),
+            )
+          ],
+        )
+
+        // ListView.builder(
+        //     itemCount: providerClass.cityModels[0].hourlyWeatherModels.length,
+        //     itemBuilder: (c, i) {
+        //       return Container(
+        //           height: mainhourH * 0.5,
+        //           child: Text(
+        //               ''' ${providerClass.cityModels[0].hourlyWeatherModels[i].descrp}
+        //               ${providerClass.cityModels[0].hourlyWeatherModels[i].dew}
+        //               ${providerClass.cityModels[0].hourlyWeatherModels[i].temp}
+        //                ${providerClass.cityModels[0].hourlyWeatherModels[i].humidity}
+        //                 ${providerClass.cityModels[0].hourlyWeatherModels[i].pressure}
+
+        //               '''));
+        //     }));
+        );
   }
 
   void checknet() async {
@@ -665,3 +773,20 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
     );
   }
 }
+
+/*
+
+    // var keyboardVisibilityController = KeyboardVisibilityController();
+    // // Query
+    // print(
+    //     'Keyboard visibility direct query: ${keyboardVisibilityController.isVisible}');
+
+    // // Subscribe
+    // keyboardSubscription =
+    //     keyboardVisibilityController.onChange.listen((bool visible) {
+    //   print('Keyboard visibility update. Is visible: $visible');
+
+    //   changeUI(visible);
+    // })
+
+*/

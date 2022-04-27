@@ -32,7 +32,6 @@ class ProviderClass with ChangeNotifier {
     "       ",
     "       ",
     "       ",
-    "       ",
     "       "
   ];
 
@@ -51,11 +50,13 @@ class ProviderClass with ChangeNotifier {
   //   notifyListeners();
   // }
 
-  void addHourlyWeatherModelToCityModel(int i, List<WeatherModel> hourWeatherModels) {
+  void addHourlyWeatherModelToCityModel(
+      int i, List<WeatherModel> hourWeatherModels) {
     cityModels[i].hourlyWeatherModels = hourWeatherModels;
   }
 
-   void addDailyWeatherModelToCityModel(int i, List<WeatherModel> dayWeatherModels) {
+  void addDailyWeatherModelToCityModel(
+      int i, List<WeatherModel> dayWeatherModels) {
     cityModels[i].dailyWeatherModels = dayWeatherModels;
   }
 
@@ -97,6 +98,15 @@ class ProviderClass with ChangeNotifier {
   int weathchipindex = 0;
   void setWeathchipindex(int i) {
     weathchipindex = i;
+    notifyListeners();
+  }
+
+  // Parameter name in hourly data
+
+  int hourlyChipIndex = 0;
+
+  void sethourlyChipIndex(int i) {
+    hourlyChipIndex = i;
     notifyListeners();
   }
 
