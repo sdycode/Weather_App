@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:weather_app1/constants/constants.dart';
-import 'package:weather_app1/providers/provider_file.dart';
-import 'package:weather_app1/screens/main_screen.dart';
+import 'package:weather/providers/provider_file.dart';
+
+import 'constants/constants.dart';
+
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
