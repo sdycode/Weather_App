@@ -7,17 +7,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'package:weather/models/citymodel.dart';
+import 'package:weather/screens/main_screen.dart';
 
-import 'package:weather_app1/constants/sizes.dart';
-import 'package:weather_app1/models/WeatherModel.dart';
-import 'package:weather_app1/models/city_data_all_models.dart';
-import 'package:weather_app1/models/citymodel.dart';
-import 'package:weather_app1/providers/provider_file.dart';
-import 'package:weather_app1/screens/main_screen.dart';
-import 'package:weather_app1/utils/checkinternet.dart';
+
 
 import '../constants/constants.dart';
 import '../constants/sizes.dart';
+import '../models/WeatherModel.dart';
+import '../models/city_data_all_models.dart';
+import '../providers/provider_file.dart';
+import '../utils/checkinternet.dart';
 
 class Screen1 extends StatefulWidget {
   double topbarh;

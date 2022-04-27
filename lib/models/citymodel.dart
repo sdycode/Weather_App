@@ -1,4 +1,5 @@
-import 'package:weather_app1/models/WeatherModel.dart';
+
+import 'WeatherModel.dart';
 
 class CityModel {
   late WeatherModel currentWeatherModel;

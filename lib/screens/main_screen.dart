@@ -5,10 +5,12 @@ import 'package:bottom_navy_bar/bottom_navy_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:weather_app1/constants/constants.dart';
-import 'package:weather_app1/providers/provider_file.dart';
-import 'package:weather_app1/screens/screen1.dart';
-import 'package:weather_app1/screens/screen2,.dart';
+import 'package:weather/screens/screen1.dart';
+import 'package:weather/screens/screen2,.dart';
+
+import '../constants/constants.dart';
+import '../providers/provider_file.dart';
+
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);

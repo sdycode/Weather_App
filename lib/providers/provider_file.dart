@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:weather_app1/models/WeatherModel.dart';
 
+import '../models/WeatherModel.dart';
 import '../models/citymodel.dart';
 
 class ProviderClass with ChangeNotifier {
