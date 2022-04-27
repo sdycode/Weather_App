@@ -5,6 +5,7 @@ import 'package:bottom_navy_bar/bottom_navy_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:weather_app1/constants/constants.dart';
 import 'package:weather_app1/providers/provider_file.dart';
 import 'package:weather_app1/screens/screen1.dart';
 import 'package:weather_app1/screens/screen2,.dart';
@@ -22,7 +23,7 @@ class MainScreenState extends State<MainScreen> {
 
   void updateMainUI() {
     print("visi main UI");
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
+    // SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
   }
 
   @override
@@ -40,20 +41,24 @@ class MainScreenState extends State<MainScreen> {
     print("visi top in main  ${MediaQuery.of(context).viewPadding.top}");
     double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
-    ProviderClass providerClass = Provider.of<ProviderClass>(context);
+    ProviderClass providerClass = Provider.of<ProviderClass>(context,  );
+     print("build in main");
 //  SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
     tabs = [
-      Screen1(MediaQuery.of(context).viewPadding.top),
+      Screen1( MediaQuery.of(context).viewPadding.top,providerClass ),
       Screen2(),
     ];
 
     return Scaffold(
         resizeToAvoidBottomInset: false,
         bottomNavigationBar: BottomNavyBar(
+          
+          backgroundColor: Constants.currentMainColor,
+          
           containerHeight: h * 0.08,
           selectedIndex: _selectedIndex,
 
-          showElevation: true, // use this to remove appBar's elevation
+          showElevation: false, // use this to remove appBar's elevation
           onItemSelected: (index) => setState(() {
             _selectedIndex = index;
             // _pageController.animateToPage(index,
@@ -62,13 +67,13 @@ class MainScreenState extends State<MainScreen> {
           items: [
             BottomNavyBarItem(
               icon: Icon(Icons.apps),
-              title: Text("${providerClass.temporarytext}"),
-              activeColor: Colors.red,
+              title: Text("City"),
+              activeColor: Color.fromARGB(255, 18, 5, 77),
             ),
             BottomNavyBarItem(
                 icon: Icon(Icons.people),
-                title: Text('Users'),
-                activeColor: Colors.purpleAccent),
+                title: Text('Compare Cities'),
+                activeColor: Color.fromARGB(255, 5, 4, 58)),
             // BottomNavyBarItem(
             //     icon: Icon(Icons.message),
             //     title: Text('Messages'),
