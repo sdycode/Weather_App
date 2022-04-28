@@ -11,6 +11,7 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 import 'package:weather/models/citymodel.dart';
 import 'package:weather/screens/main_screen.dart';
+import 'package:weather/widgets/bar_chart.dart';
 
 import '../constants/constants.dart';
 import '../constants/sizes.dart';
@@ -103,12 +104,10 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
 
   List<List<double>> sampledata = [
     [10, 100],
-      [20, 150],
-
-        [30, 80],
-          [40, 210],
-            [50, 160]
-
+    [20, 150],
+    [30, 80],
+    [40, 210],
+    [50, 160]
   ];
 
   @override
@@ -569,51 +568,59 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                     );
                   }),
             ),
-              SfCartesianChart(
-              primaryXAxis: CategoryAxis(),
-              // Chart title
-              title: ChartTitle(text: 'Half yearly sales analysis'),
-              // Enable legend
-              legend: Legend(isVisible: true),
-              // Enable tooltip
-              tooltipBehavior: TooltipBehavior(enable: true),
-              // series: <ChartSeries<_SalesData, String>>[
-              //   LineSeries<_SalesData, String>(
-              //       dataSource: data,
-              //       xValueMapper: (_SalesData sales, _) => sales.year,
-              //       yValueMapper: (_SalesData sales, _) => sales.sales,
-              //       name: 'Sales',
-              //       // Enable data label
-              //       dataLabelSettings: DataLabelSettings(isVisible: true))
-              // ]
-              ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                //Initialize the spark charts widget
-                child: SfSparkBarChart.custom(
-                  
-                  //Enable the trackball
-                  trackball: SparkChartTrackball(
-                      activationMode: SparkChartActivationMode.tap),
-                  //Enable marker
-                  // marker: SparkChartMarker(
-                  //     displayMode: SparkChartMarkerDisplayMode.all),
-                  //Enable data label
-                  labelDisplayMode: SparkChartLabelDisplayMode.all,
-                  xValueMapper: (int index) =>
-                  providerClass.cityModels.isEmpty? sampledata[index][0] :
-                   providerClass
-                      .cityModels[0].hourlyWeatherModels[index].time,
-                  yValueMapper: (int index) => 
-                  providerClass.cityModels.isEmpty? sampledata[index][1] :
-                  providerClass
-                      .cityModels[0].hourlyWeatherModels[index].temp,
-                  dataCount:
-                    providerClass.cityModels.isEmpty? sampledata.length :  providerClass.cityModels[0].hourlyWeatherModels.length,
-                ),
-              ),
-            )
+           providerClass.cityModels.isNotEmpty? BarChart(
+              xaxislist: providerClass.cityModels[0].hourlyWeatherModels.map((e) => e.time).toList() ,
+              yaxislist:
+                  providerClass.cityModels[0].hourlyWeatherModels.map((e) {
+                return e.temp;
+              }).toList(),
+            ): 
+            BarChart()
+            //   SfCartesianChart(
+            //   primaryXAxis: CategoryAxis(),
+            //   // Chart title
+            //   title: ChartTitle(text: 'Half yearly sales analysis'),
+            //   // Enable legend
+            //   legend: Legend(isVisible: true),
+            //   // Enable tooltip
+            //   tooltipBehavior: TooltipBehavior(enable: true),
+            //   // series: <ChartSeries<_SalesData, String>>[
+            //   //   LineSeries<_SalesData, String>(
+            //   //       dataSource: data,
+            //   //       xValueMapper: (_SalesData sales, _) => sales.year,
+            //   //       yValueMapper: (_SalesData sales, _) => sales.sales,
+            //   //       name: 'Sales',
+            //   //       // Enable data label
+            //   //       dataLabelSettings: DataLabelSettings(isVisible: true))
+            //   // ]
+            //   ),
+            // Expanded(
+            //   child: Padding(
+            //     padding: const EdgeInsets.all(8.0),
+            //     //Initialize the spark charts widget
+            //     child: SfSparkBarChart.custom(
+
+            //       //Enable the trackball
+            //       trackball: SparkChartTrackball(
+            //           activationMode: SparkChartActivationMode.tap),
+            //       //Enable marker
+            //       // marker: SparkChartMarker(
+            //       //     displayMode: SparkChartMarkerDisplayMode.all),
+            //       //Enable data label
+            //       labelDisplayMode: SparkChartLabelDisplayMode.all,
+            //       xValueMapper: (int index) =>
+            //       providerClass.cityModels.isEmpty? sampledata[index][0] :
+            //        providerClass
+            //           .cityModels[0].hourlyWeatherModels[index].time,
+            //       yValueMapper: (int index) =>
+            //       providerClass.cityModels.isEmpty? sampledata[index][1] :
+            //       providerClass
+            //           .cityModels[0].hourlyWeatherModels[index].temp,
+            //       dataCount:
+            //         providerClass.cityModels.isEmpty? sampledata.length :  providerClass.cityModels[0].hourlyWeatherModels.length,
+            //     ),
+            //   ),
+            // )
           ],
         )
 
