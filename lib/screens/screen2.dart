@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:weather/models/WeatherModel.dart';
 import 'package:weather/models/city_data_all_models.dart';
 import 'package:weather/models/citymodel.dart';
+import 'package:weather/models/date_time_epoch.dart';
 import 'package:weather/providers/provider_file.dart';
 
 import '../constants/constants.dart';
@@ -53,8 +54,9 @@ class _Screen2State extends State<Screen2> {
   @override
   Widget build(BuildContext context) {
     providerClass = Provider.of<ProviderClass>(context);
+
     return Container(
-      height: Sizes().sh - 56,
+      height: Sizes().sh - (56 + providerClass.topbarh) + 6,
       width: Sizes().sw,
       color: Constants.currentMainColor.withGreen(220),
       child: Column(
@@ -64,25 +66,25 @@ class _Screen2State extends State<Screen2> {
           ),
           providerClass.showCityDataLoading
               ? SpinKitPouringHourGlassRefined(
-                  color: Color.fromARGB(255, 9, 16, 67), 
-                  
-                 size: Sizes().sh*0.2
-                  )
+                  color: Color.fromARGB(255, 9, 16, 67), size: Sizes().sh * 0.2)
               : Container(),
           Expanded(
             child: Container(width: Sizes().sw, child: citiesList()),
-          ), 
+          ),
           ElevatedButton(
-            onPressed: (){}, child:Text("Compare All"), 
-            
-            style: ButtonStyle( 
-              backgroundColor:  
-              providerClass.cityModels.length > 1 ? 
-              MaterialStateProperty.all(    Colors.blueGrey.shade300 ) 
-          
-              : MaterialStateProperty.all(    Color.fromARGB(255, 146, 50, 50)) 
-            ),
-            )
+            onPressed: () {
+              print(" timeee  " +
+                  DateTime.fromMillisecondsSinceEpoch(1651314777).toString());
+              EpochDateTime e = EpochDateTime(1651314777);
+              print("epoch is ${e.day}   ${e.year}");
+            },
+            child: Text("Compare All"),
+            style: ButtonStyle(
+                backgroundColor: providerClass.cityModels.length < 2
+                    ? MaterialStateProperty.all(Colors.blueGrey.shade300)
+                    : MaterialStateProperty.all(
+                        Color.fromARGB(255, 146, 50, 50))),
+          )
         ],
       ),
     );
@@ -95,7 +97,8 @@ class _Screen2State extends State<Screen2> {
       margin: EdgeInsets.all(Sizes().sw * 0.05),
       child: TextField(
         controller: citynameCont,
-        decoration: InputDecoration(hintText: "Enter city name..."),
+        decoration: InputDecoration(
+            hintText: "Enter city name...", contentPadding: EdgeInsets.zero),
         keyboardType: TextInputType.name,
       ),
     );
@@ -174,7 +177,13 @@ class _Screen2State extends State<Screen2> {
               cityData2.current.pressure,
               cityData2.current.humidity,
               cityData2.current.windSpeed,
-              cityData2.current.dt);
+              cityData2.current.dt, 
+              EpochDateTime(  cityData2.current.dt.toInt()
+              
+              )
+              
+        
+              );
 
           List<WeatherModel> hourlymodels = [];
           List<WeatherModel> dailymodels = [];
@@ -188,7 +197,11 @@ class _Screen2State extends State<Screen2> {
                 cityData2.hourly[i].pressure,
                 cityData2.hourly[i].humidity,
                 cityData2.hourly[i].windSpeed,
-                cityData2.hourly[i].dt);
+                cityData2.hourly[i].dt, 
+                
+                 EpochDateTime(  cityData2.hourly[i].dt.toInt())
+             
+                );
 
             hourlymodels.add(hourlytempmodel);
           }
@@ -202,7 +215,11 @@ class _Screen2State extends State<Screen2> {
                 cityData2.daily[i].pressure,
                 cityData2.daily[i].humidity,
                 cityData2.daily[i].windSpeed,
-                cityData2.daily[i].dt);
+                cityData2.daily[i].dt, 
+                
+                                 EpochDateTime(  cityData2.daily[i].dt.toInt())
+
+                );
 
             dailymodels.add(dailyTempModel);
           }
@@ -210,9 +227,8 @@ class _Screen2State extends State<Screen2> {
           // providerClass.addHourlyWeatherModel(weatherModel, cityNo)
           CityModel cityModel = CityModel(citynameCont.text,
               currentweathermodel, hourlymodels, dailymodels);
-              providerClass.setShowCityDataLoading(false); 
+          providerClass.setShowCityDataLoading(false);
           providerClass.addNewCityModel(cityModel);
-
 
           // setState(() {
           parametervalue.clear();
@@ -247,7 +263,7 @@ class _Screen2State extends State<Screen2> {
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(snackbar);
         providerClass.setShowCityDataLoading(false);
-        return; 
+        return;
       }
     } else {
       setState(() {
@@ -255,7 +271,6 @@ class _Screen2State extends State<Screen2> {
             context: context,
             builder: (c) {
               return Dialog(
-                
                 clipBehavior: Clip.antiAlias,
                 shape: RoundedRectangleBorder(
                     borderRadius:
@@ -293,49 +308,55 @@ class _Screen2State extends State<Screen2> {
       child: ListView.builder(
           itemCount: providerClass.cityModels.length,
           itemBuilder: ((c, i) {
-            return Container(
-              height: Sizes().sh * 0.08,
-              width: Sizes().sw,
-              margin: EdgeInsets.only( 
-                    right: 
-                Sizes().sw * 0.04, 
-                left: 
-                Sizes().sw * 0.04, 
-                
-                top:  Sizes().sw * 0.04, 
-                
-                ),
-              decoration: BoxDecoration(
-                  color:
-                      Constants.citycolors[i % (Constants.citycolors.length)],
-                  borderRadius: BorderRadius.circular(Sizes().sh * 0.05),
-                  boxShadow: [BoxShadow()]),
-              child: Row(
-                children: [
-                  Container(
+            return TweenAnimationBuilder<Offset>(
+              builder: (BuildContext context, Offset value, Widget? child) {
+                return Transform.translate(
+                  offset: value,
+                  child: Container(
                     height: Sizes().sh * 0.08,
-                    width: Sizes().sw * 0.7,
-                    child: FittedBox(
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Text(providerClass.cityModels[i].cityname),
-                      ),
+                    width: Sizes().sw,
+                    margin: EdgeInsets.only(
+                      right: Sizes().sw * 0.04,
+                      left: Sizes().sw * 0.04,
+                      top: Sizes().sw * 0.04,
+                    ),
+                    decoration: BoxDecoration(
+                        color: Constants
+                            .citycolors[i % (Constants.citycolors.length)],
+                        borderRadius: BorderRadius.circular(Sizes().sh * 0.05),
+                        boxShadow: [BoxShadow()]),
+                    child: Row(
+                      children: [
+                        Container(
+                          height: Sizes().sh * 0.08,
+                          width: Sizes().sw * 0.7,
+                          child: FittedBox(
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: Text(providerClass.cityModels[i].cityname),
+                            ),
+                          ),
+                        ),
+                        Spacer(),
+                        Container(
+                          height: Sizes().sh * 0.08,
+                          width: Sizes().sw * 0.16,
+                          child: FittedBox(
+                            child: IconButton(
+                                onPressed: () {
+                                  providerClass.removeCity(i);
+                                },
+                                icon: Icon(Icons.close)),
+                          ),
+                        )
+                      ],
                     ),
                   ),
-                  Spacer(),
-                  Container(
-                    height: Sizes().sh * 0.08,
-                    width: Sizes().sw * 0.16,
-                    child: FittedBox(
-                      child: IconButton(
-                          onPressed: () {
-                            providerClass.removeCity(i);
-                          },
-                          icon: Icon(Icons.close)),
-                    ),
-                  )
-                ],
-              ),
+                );
+              },
+              duration: Duration(seconds: 1),
+              tween: Tween<Offset>(
+                  begin: Offset(0, -(50 * i).toDouble()), end: Offset.zero),
             );
           })),
     );

@@ -11,7 +11,6 @@ import 'package:weather/screens/screen2.dart';
 import '../constants/constants.dart';
 import '../providers/provider_file.dart';
 
-
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
 
@@ -22,7 +21,7 @@ class MainScreen extends StatefulWidget {
 class MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   List<Widget> tabs = [Text(""), Text("")];
-
+  late ProviderClass providerClass;
   void updateMainUI() {
     print("visi main UI");
     // SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
@@ -36,6 +35,14 @@ class MainScreenState extends State<MainScreen> {
     // SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
 
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((dd) {
+      // providerClass = Provider.of<ProviderClass>(
+      //   context,
+      // );
+      // providerClass.setTopBarHeight(MediaQuery.of(context).viewPadding.top);
+      // // do something
+      print("Build Completed");
+    });
   }
 
   @override
@@ -43,20 +50,24 @@ class MainScreenState extends State<MainScreen> {
     print("visi top in main  ${MediaQuery.of(context).viewPadding.top}");
     double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
-    ProviderClass providerClass = Provider.of<ProviderClass>(context,  );
-     print("build in main");
+
+     providerClass = Provider.of<ProviderClass>(
+      context,
+    );
+    providerClass.setTopBarHeight(MediaQuery.of(context).viewPadding.top);
+    print(
+        "build in main ${MediaQuery.of(context).viewInsets.top}  //  ${MediaQuery.of(context).viewPadding.top} ");
 //  SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
     tabs = [
-      Screen1( MediaQuery.of(context).viewPadding.top,providerClass ),
+      Screen1(MediaQuery.of(context).viewPadding.top, providerClass),
       Screen2(),
     ];
 
     return Scaffold(
         resizeToAvoidBottomInset: false,
         bottomNavigationBar: BottomNavyBar(
-          
           backgroundColor: Constants.currentMainColor,
-          
+
           containerHeight: h * 0.08,
           selectedIndex: _selectedIndex,
 
@@ -90,9 +101,9 @@ class MainScreenState extends State<MainScreen> {
           child: SingleChildScrollView(
               child: Column(
             children: [
-              SizedBox( 
-                // height: MediaQuery.of(context).viewPadding.top,
-              ),
+              SizedBox(
+                  // height: MediaQuery.of(context).viewPadding.top,
+                  ),
               tabs[_selectedIndex],
               Container(
                 height: MediaQuery.of(context).viewPadding.bottom,

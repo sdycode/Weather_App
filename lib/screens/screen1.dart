@@ -12,11 +12,13 @@ import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 import 'package:weather/models/citymodel.dart';
 import 'package:weather/screens/main_screen.dart';
 import 'package:weather/widgets/bar_chart.dart';
+import 'package:weather/widgets/pouring_glass_animatiom.dart';
 
 import '../constants/constants.dart';
 import '../constants/sizes.dart';
 import '../models/WeatherModel.dart';
 import '../models/city_data_all_models.dart';
+import '../models/date_time_epoch.dart';
 import '../providers/provider_file.dart';
 import '../utils/checkinternet.dart';
 
@@ -51,7 +53,7 @@ icon
 class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
   late StreamSubscription<bool> keyboardSubscription;
   late ProviderClass providerClass;
-
+  List<String> units = ["\u00B0 C", "\u00B0 C", "hPa", "%", "m/s"];
   bool isConnection = false;
 
   TextEditingController citynamecont = TextEditingController();
@@ -197,23 +199,37 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
           borderRadius: BorderRadius.circular(Sizes().sh * 0.03),
           color: Colors.white),
       child: Center(
-        child: TextField(
-          controller: citynamecont,
-          textAlign: TextAlign.center,
-          onChanged: (d) {
-            // providerClass.setTemptext(d);
-          },
-          onSubmitted: (d) {
-            // SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
-          },
-          keyboardType: TextInputType.name,
-          decoration: InputDecoration(
-            contentPadding: EdgeInsets.all(10),
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(Sizes().sh * 0.05)),
-            hintText: 'Enter city name',
+        child: Stack(children: [
+          TextField(
+            controller: citynamecont,
+            textAlign: TextAlign.center,
+            onChanged: (d) {
+              // providerClass.setTemptext(d);
+            },
+            onSubmitted: (d) {
+              // SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
+            },
+            keyboardType: TextInputType.name,
+            decoration: InputDecoration(
+              contentPadding: EdgeInsets.all(10),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(Sizes().sh * 0.05)),
+              hintText: 'Enter city name',
+            ),
           ),
-        ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: InkWell(
+              onTap: () {
+                citynamecont.clear();
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Icon(Icons.close_rounded),
+              ),
+            ),
+          )
+        ]),
       ),
     );
   }
@@ -225,6 +241,8 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
     bool checked = await CheckInternet.instance.check();
     if (checked) {
       if (citynamecont.text.isNotEmpty) {
+        providerClass.setLoadingInSingleCity(true);
+        citynamecont.text = getCamelCase(citynamecont.text);
         String url =
             "http://api.openweathermap.org/geo/1.0/direct?q=${citynamecont.text}&appid=${Constants.apikey1}";
         // String url1 =
@@ -240,6 +258,7 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                       "Sorry data is not available for ${citynamecont.text}")));
           // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(context).showSnackBar(nocitysnackbar);
+          providerClass.setLoadingInSingleCity(false);
         } else {
           print("data ${responseData}");
           citynameresponse = responseData[0]['name'];
@@ -271,7 +290,8 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
               cityData2.current.pressure,
               cityData2.current.humidity,
               cityData2.current.windSpeed,
-              cityData2.current.dt);
+              cityData2.current.dt,
+              EpochDateTime(cityData2.current.dt.toInt()));
 
           List<WeatherModel> hourlymodels = [];
           List<WeatherModel> dailymodels = [];
@@ -282,12 +302,13 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                 imgurl,
                 double.parse(
                     (cityData2.hourly[i].temp - 273.15).toStringAsFixed(2)),
-                double.parse((cityData2.current.dewPodouble - 273.15)
+                double.parse((cityData2.hourly[i].dewPodouble - 273.15)
                     .toStringAsFixed(2)),
                 cityData2.hourly[i].pressure,
                 cityData2.hourly[i].humidity,
                 cityData2.hourly[i].windSpeed,
-                cityData2.hourly[i].dt);
+                cityData2.hourly[i].dt,
+                EpochDateTime(cityData2.hourly[i].dt.toInt()));
 
             hourlymodels.add(hourlytempmodel);
           }
@@ -296,19 +317,24 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
             WeatherModel dailyTempModel = WeatherModel(
                 cityData2.daily[i].weather[0].description,
                 imgurl,
-                cityData2.daily[i].temp!.day - 273.15,
-                cityData2.daily[i].dewPodouble - 273.15,
+                double.parse(
+                    (cityData2.daily[i].temp!.day - 273.15).toStringAsFixed(2)),
+                double.parse((cityData2.daily[i].dewPodouble - 273.15)
+                    .toStringAsFixed(2)),
                 cityData2.daily[i].pressure,
                 cityData2.daily[i].humidity,
                 cityData2.daily[i].windSpeed,
-                cityData2.daily[i].dt);
+                cityData2.daily[i].dt,
+                EpochDateTime(cityData2.daily[i].dt.toInt()));
 
             dailymodels.add(dailyTempModel);
           }
 
           // providerClass.addHourlyWeatherModel(weatherModel, cityNo)
-          CityModel cityModel =
-              CityModel(citynamecont.text ,currentweathermodel, hourlymodels, dailymodels);
+
+          providerClass.setLoadingInSingleCity(false);
+          CityModel cityModel = CityModel(citynamecont.text,
+              currentweathermodel, hourlymodels, dailymodels);
           providerClass.addNewCityModel(cityModel);
 
           // setState(() {
@@ -350,12 +376,14 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
             context: context,
             builder: (c) {
               return Dialog(
+                // shape: RoundedRectSliderTrackShape(),
+                clipBehavior: Clip.antiAlias,
                 child: InkWell(
                   onTap: () {
                     Navigator.pop(context);
                   },
                   child: Container(
-                    height: Sizes().sh * 0.3,
+                    height: Sizes().sh * 0.1,
                     width: Sizes().sw * 0.8,
                     child: const Center(
                         child:
@@ -365,6 +393,17 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
               );
             });
       });
+    }
+  }
+
+  String getCamelCase(String text) {
+    if (text.isNotEmpty) {
+      return text.characters.length > 1
+          ? (text.characters.first.toUpperCase() +
+              text.substring(1).toLowerCase())
+          : text.toUpperCase();
+    } else {
+      return text;
     }
   }
 
@@ -463,12 +502,18 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
           Container(
             width: Sizes().sw,
             height: Sizes().sh * 0.06,
+            // color: Colors.red,
             child: Row(
               children: [
                 citynameTextField(),
                 InkWell(
                   onTap: getDetailsbyCityName,
-                  child: Icon(Icons.search),
+                  splashColor: Constants.chipColor,
+                  radius: Sizes().sh * 0.06,
+                  child: Container(
+                      width: Sizes().sh * 0.06,
+                      height: Sizes().sh * 0.06,
+                      child: Icon(Icons.search)),
                 )
               ],
             ),
@@ -488,23 +533,6 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                   animatedWidget(2),
                   animatedWidget(3),
                   animatedWidget(4),
-
-                  // Row(
-                  //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  //   children: [samplecard(0), samplecard(1)],
-                  // ),
-                  // Row(
-                  //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  //   children: [samplecard(2), samplecard(3)],
-                  // ),
-                  // Row(
-                  //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  //   children: [samplecard(4), samplecard(5)],
-                  // ),
-                  // Row(
-                  //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  //   children: [description(), iconcard()],
-                  // ),
                 ],
               ),
             ),
@@ -524,9 +552,14 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
   Widget daysWeather() {
     double h = Sizes().sh * (1 - 0.08 - 0.06 - 0.05);
     double chiph = Sizes().sh * (1 - 0.08 - 0.06 - 0.05) * 0.06;
+    // providerClass.cityModels[0].dailyWeatherModels.forEach(
+    //   (element) {
+    //    print("hour day  ${element.epTime.dateTime}");
+    //   },
+    // );
     return Container(
         height: h,
-        color: Constants.currentMainColor,
+        color: Constants.currentMainColor.withRed(180),
         child: Column(
           children: [
             Container(
@@ -547,7 +580,7 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                       child: Container(
                         height: chiph,
                         margin: EdgeInsets.all(h * 0.01),
-                        padding: providerClass.hourlyChipIndex == i
+                        padding: providerClass.daysChipIndex == i
                             ? EdgeInsets.all(h * 0.008)
                             : EdgeInsets.all(h * 0.012),
                         decoration: BoxDecoration(
@@ -576,7 +609,7 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
             providerClass.cityModels.isNotEmpty
                 ? BarChart(
                     xaxislist: providerClass.cityModels[0].dailyWeatherModels
-                        .map((e) => e.time)
+                        .map((e) => Text(e.epTime.hour.toString()))
                         .toList(),
                     yaxislist:
                         providerClass.cityModels[0].dailyWeatherModels.map((e) {
@@ -600,76 +633,26 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                           return e.temp;
                       }
                     }).toList(),
+                    h: Sizes().sh * 0.7,
+                    w: Sizes().sw * 0.95,
+                    xh: 0.10,
+                    xaxisname: "Time", 
+                    yaxisname: parameternames[providerClass.daysChipIndex]
+
                   )
                 : BarChart()
-            //   SfCartesianChart(
-            //   primaryXAxis: CategoryAxis(),
-            //   // Chart title
-            //   title: ChartTitle(text: 'Half yearly sales analysis'),
-            //   // Enable legend
-            //   legend: Legend(isVisible: true),
-            //   // Enable tooltip
-            //   tooltipBehavior: TooltipBehavior(enable: true),
-            //   // series: <ChartSeries<_SalesData, String>>[
-            //   //   LineSeries<_SalesData, String>(
-            //   //       dataSource: data,
-            //   //       xValueMapper: (_SalesData sales, _) => sales.year,
-            //   //       yValueMapper: (_SalesData sales, _) => sales.sales,
-            //   //       name: 'Sales',
-            //   //       // Enable data label
-            //   //       dataLabelSettings: DataLabelSettings(isVisible: true))
-            //   // ]
-            //   ),
-            // Expanded(
-            //   child: Padding(
-            //     padding: const EdgeInsets.all(8.0),
-            //     //Initialize the spark charts widget
-            //     child: SfSparkBarChart.custom(
-
-            //       //Enable the trackball
-            //       trackball: SparkChartTrackball(
-            //           activationMode: SparkChartActivationMode.tap),
-            //       //Enable marker
-            //       // marker: SparkChartMarker(
-            //       //     displayMode: SparkChartMarkerDisplayMode.all),
-            //       //Enable data label
-            //       labelDisplayMode: SparkChartLabelDisplayMode.all,
-            //       xValueMapper: (int index) =>
-            //       providerClass.cityModels.isEmpty? sampledata[index][0] :
-            //        providerClass
-            //           .cityModels[0].hourlyWeatherModels[index].time,
-            //       yValueMapper: (int index) =>
-            //       providerClass.cityModels.isEmpty? sampledata[index][1] :
-            //       providerClass
-            //           .cityModels[0].hourlyWeatherModels[index].temp,
-            //       dataCount:
-            //         providerClass.cityModels.isEmpty? sampledata.length :  providerClass.cityModels[0].hourlyWeatherModels.length,
-            //     ),
-            //   ),
-            // )
           ],
-        )
-
-        // ListView.builder(
-        //     itemCount: providerClass.cityModels[0].hourlyWeatherModels.length,
-        //     itemBuilder: (c, i) {
-        //       return Container(
-        //           height: mainhourH * 0.5,
-        //           child: Text(
-        //               ''' ${providerClass.cityModels[0].hourlyWeatherModels[i].descrp}
-        //               ${providerClass.cityModels[0].hourlyWeatherModels[i].dew}
-        //               ${providerClass.cityModels[0].hourlyWeatherModels[i].temp}
-        //                ${providerClass.cityModels[0].hourlyWeatherModels[i].humidity}
-        //                 ${providerClass.cityModels[0].hourlyWeatherModels[i].pressure}
-
-        //               '''));
-        //     }));
-        );
+        ));
   }
 
   Widget hourlyWeather() {
     double h = Sizes().sh * (1 - 0.08 - 0.06 - 0.05);
     double chiph = Sizes().sh * (1 - 0.08 - 0.06 - 0.05) * 0.06;
+    //     providerClass.cityModels[0].hourlyWeatherModels.forEach(
+    //   (element) {
+    //     print("hour ${element.epTime.dateTime}");
+    //   },
+    // );
     return Container(
         height: h,
         color: Constants.currentMainColor,
@@ -721,8 +704,10 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
             ),
             providerClass.cityModels.isNotEmpty
                 ? BarChart(
+                    barColor:
+                        Constants.cardcolors[providerClass.hourlyChipIndex],
                     xaxislist: providerClass.cityModels[0].hourlyWeatherModels
-                        .map((e) => e.time)
+                        .map((e) => Text(e.epTime.minute.toString()))
                         .toList(),
                     yaxislist: providerClass.cityModels[0].hourlyWeatherModels
                         .map((e) {
@@ -746,53 +731,14 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                           return e.temp;
                       }
                     }).toList(),
+                    h: Sizes().sh * 0.7,
+                    w: Sizes().sw * 0.95,
+                     xh: 0.10,
+                       xaxisname: "Time", 
+                    yaxisname: parameternames[providerClass.daysChipIndex]
+
                   )
                 : BarChart()
-            //   SfCartesianChart(
-            //   primaryXAxis: CategoryAxis(),
-            //   // Chart title
-            //   title: ChartTitle(text: 'Half yearly sales analysis'),
-            //   // Enable legend
-            //   legend: Legend(isVisible: true),
-            //   // Enable tooltip
-            //   tooltipBehavior: TooltipBehavior(enable: true),
-            //   // series: <ChartSeries<_SalesData, String>>[
-            //   //   LineSeries<_SalesData, String>(
-            //   //       dataSource: data,
-            //   //       xValueMapper: (_SalesData sales, _) => sales.year,
-            //   //       yValueMapper: (_SalesData sales, _) => sales.sales,
-            //   //       name: 'Sales',
-            //   //       // Enable data label
-            //   //       dataLabelSettings: DataLabelSettings(isVisible: true))
-            //   // ]
-            //   ),
-            // Expanded(
-            //   child: Padding(
-            //     padding: const EdgeInsets.all(8.0),
-            //     //Initialize the spark charts widget
-            //     child: SfSparkBarChart.custom(
-
-            //       //Enable the trackball
-            //       trackball: SparkChartTrackball(
-            //           activationMode: SparkChartActivationMode.tap),
-            //       //Enable marker
-            //       // marker: SparkChartMarker(
-            //       //     displayMode: SparkChartMarkerDisplayMode.all),
-            //       //Enable data label
-            //       labelDisplayMode: SparkChartLabelDisplayMode.all,
-            //       xValueMapper: (int index) =>
-            //       providerClass.cityModels.isEmpty? sampledata[index][0] :
-            //        providerClass
-            //           .cityModels[0].hourlyWeatherModels[index].time,
-            //       yValueMapper: (int index) =>
-            //       providerClass.cityModels.isEmpty? sampledata[index][1] :
-            //       providerClass
-            //           .cityModels[0].hourlyWeatherModels[index].temp,
-            //       dataCount:
-            //         providerClass.cityModels.isEmpty? sampledata.length :  providerClass.cityModels[0].hourlyWeatherModels.length,
-            //     ),
-            //   ),
-            // )
           ],
         )
 
@@ -856,7 +802,7 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
         return Transform.translate(
           offset: providerClass.animateCurrent ? value : Offset(0, 0),
           child: Container(
-            height: Sizes().sh * 0.1,
+            height: Sizes().sh * 0.08,
             width: Sizes().sw * 0.8,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(Sizes().sh * 0.04),
@@ -879,19 +825,30 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                               height: Sizes().sh * 0.1,
                               // width:Sizes().sw * 0.2,
 
-                              color: Colors.black.withAlpha(50),
+                              color: Colors.black.withAlpha(30),
                               child: Center(
                                 child: ConstrainedBox(
                                   constraints: BoxConstraints(
                                     minWidth: Sizes().sw * 0.2,
                                   ),
                                   child: Container(
-                                    child: Text(
-                                      providerClass.parmvalues[i],
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                          fontSize: Sizes().sh * 0.1 * 0.34),
-                                    ),
+                                    child: providerClass.loadingInSingleCity
+                                        ? SpinKitPouringHourGlassRefined(
+                                            color:
+                                                Color.fromARGB(255, 5, 15, 56),
+                                            size: Sizes().sh * 0.1)
+                                        : Text(
+                                            providerClass.parmvalues[i] +
+                                                " " +
+                                                units[i],
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                fontSize:
+                                                    Sizes().sh * 0.1 * 0.3),
+                                          ),
+                                    margin: EdgeInsets.only(
+                                        left: Sizes().sw * 0.02,
+                                        right: Sizes().sw * 0.02),
                                   ),
                                 ),
                               ),
@@ -899,7 +856,7 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                           ),
                           Expanded(
                               child: Padding(
-                            padding: EdgeInsets.all(Sizes().sh * 0.03),
+                            padding: EdgeInsets.all(Sizes().sh * 0.02),
                             child: FittedBox(
                                 child: Text(parameternames[i]),
                                 fit: BoxFit.fitHeight),
@@ -908,7 +865,7 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                       : [
                           Expanded(
                               child: Padding(
-                            padding: EdgeInsets.all(Sizes().sh * 0.03),
+                            padding: EdgeInsets.all(Sizes().sh * 0.02),
                             child: FittedBox(
                                 child: Text(parameternames[i]),
                                 fit: BoxFit.fitHeight),
@@ -923,14 +880,25 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                                 height: Sizes().sh * 0.1,
                                 // width:Sizes().sw * 0.2,
 
-                                color: Colors.black.withAlpha(50),
+                                color: Colors.black.withAlpha(30),
                                 child: Center(
                                   child: Container(
-                                    child: Text(
-                                      providerClass.parmvalues[i],
-                                      style: TextStyle(
-                                          fontSize: Sizes().sh * 0.1 * 0.4),
-                                    ),
+                                    child: providerClass.loadingInSingleCity
+                                        ? SpinKitPouringHourGlassRefined(
+                                            color:
+                                                Color.fromARGB(255, 5, 15, 56),
+                                            size: Sizes().sh * 0.1)
+                                        : Text(
+                                            providerClass.parmvalues[i] +
+                                                " " +
+                                                units[i],
+                                            style: TextStyle(
+                                                fontSize:
+                                                    Sizes().sh * 0.1 * 0.3),
+                                          ),
+                                    margin: EdgeInsets.only(
+                                        left: Sizes().sw * 0.02,
+                                        right: Sizes().sw * 0.02),
                                   ),
                                 ),
                               ),

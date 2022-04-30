@@ -33,4 +33,15 @@ class Constants {
     Color.fromARGB(255, 235, 155, 108),
     Color.fromARGB(255, 240, 115, 177),
   ];
+
+
+  // List of unit used on openweather API
+  /* unit - standard
+  Temp , Dew Point - kelvin
+  Pressure hPa
+  Humidity - % 
+  wind speed : m/sec
+
+
+  */
 }

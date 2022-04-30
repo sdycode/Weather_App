@@ -11,6 +11,20 @@ class ProviderClass with ChangeNotifier {
   bool animateCurrent = false;
   int animatecurrntTime = 1;
 
+  bool showOverlayPoint = false;
+  // Shoe and hide overloay point hich chill show x & y values
+  void setShowOverlayPoint(bool b) {
+    showOverlayPoint = b;
+    notifyListeners();
+  }
+
+  // Bar index where finger moved
+  int barOverlayIndex = -1;
+  void setbarOverlayIndex(int i) {
+    barOverlayIndex = i;
+    notifyListeners();
+  }
+
   // ---------------------
   void setAnimateCurrent(bool b) {
     animateCurrent = b;
@@ -27,13 +41,28 @@ class ProviderClass with ChangeNotifier {
     print("buildcount $buildCount");
   }
 
-  List<String> parmvalues = [
-    "       ",
-    "       ",
-    "       ",
-    "       ",
-    "       "
+  // Shrink factor for chart came in 1 screen
+  double shrinkFactor = 1.0;
+  void setShrinkFactor(double d) {
+    shrinkFactor = d;
+    notifyListeners();
+  }
+
+  List<String> parmvalues = ["--", "--", "--", "--", "--"];
+  List<String> parameternames = [
+    'Temperature',
+    'Dew Point',
+    'Pressure',
+    'Humidity',
+    'Wind Speed'
   ];
+
+  // Single city fields
+  bool loadingInSingleCity = false;
+  void setLoadingInSingleCity(bool b) {
+    loadingInSingleCity = b;
+    notifyListeners();
+  }
 
   // All cities current model
   List<CityModel> cityModels = [];
@@ -138,5 +167,14 @@ class ProviderClass with ChangeNotifier {
     showCityDataLoading = b;
 
     notifyListeners();
+  }
+
+  // Top bar height
+  double topbarh = 24;
+
+  void setTopBarHeight(double top) {
+    topbarh = top;
+    // notifyListeners();
+    // removed as called in build
   }
 }

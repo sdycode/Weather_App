@@ -1,3 +1,5 @@
+import 'package:weather/models/date_time_epoch.dart';
+
 class WeatherModel {
 // temp
 // dew point
@@ -16,15 +18,11 @@ class WeatherModel {
 
   late double windspeed;
   late double time;
+  late EpochDateTime epTime;
 
-  WeatherModel(
-    this.descrp,
-    this.icon,
-    this.temp,
-    this.dew,
-    this.pressure,
-    this.humidity,
-    this.windspeed,
-    this.time
-  );
+  WeatherModel(this.descrp, this.icon, this.temp, this.dew, this.pressure,
+      this.humidity, this.windspeed, this.time, 
+      
+      this.epTime
+      );
 }
