@@ -1,3 +1,6 @@
+// import 'dart:http';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -6,8 +9,9 @@ import 'package:weather/screens/main_screen.dart';
 
 import 'constants/constants.dart';
 
-void main() {
+void main()async {
   WidgetsFlutterBinding.ensureInitialized();
+  // var server = await HttpServer.bind(InternetAddress.loopbackIPv4, 58640);
 
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
     statusBarColor: Constants.topbarColor.withAlpha(120),

@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:weather/screens/screen1.dart';
-import 'package:weather/screens/screen2,.dart';
+import 'package:weather/screens/screen2.dart';
 
 import '../constants/constants.dart';
 import '../providers/provider_file.dart';

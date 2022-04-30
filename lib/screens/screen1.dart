@@ -264,8 +264,10 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
           WeatherModel currentweathermodel = WeatherModel(
               cityData2.current.weather[0].description,
               imgurl,
-              cityData2.current.temp - 273.15,
-              cityData2.current.dewPodouble - 273.15,
+              double.parse(
+                  (cityData2.current.temp - 273.15).toStringAsFixed(2)),
+              double.parse(
+                  (cityData2.current.dewPodouble - 273.15).toStringAsFixed(2)),
               cityData2.current.pressure,
               cityData2.current.humidity,
               cityData2.current.windSpeed,
@@ -278,8 +280,10 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
             WeatherModel hourlytempmodel = WeatherModel(
                 cityData2.hourly[i].weather[0].description,
                 imgurl,
-                cityData2.hourly[i].temp - 273.15,
-                cityData2.hourly[i].dewPodouble - 273.15,
+                double.parse(
+                    (cityData2.hourly[i].temp - 273.15).toStringAsFixed(2)),
+                double.parse((cityData2.current.dewPodouble - 273.15)
+                    .toStringAsFixed(2)),
                 cityData2.hourly[i].pressure,
                 cityData2.hourly[i].humidity,
                 cityData2.hourly[i].windSpeed,
@@ -304,7 +308,7 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
 
           // providerClass.addHourlyWeatherModel(weatherModel, cityNo)
           CityModel cityModel =
-              CityModel(currentweathermodel, hourlymodels, dailymodels);
+              CityModel(citynamecont.text ,currentweathermodel, hourlymodels, dailymodels);
           providerClass.addNewCityModel(cityModel);
 
           // setState(() {
@@ -518,7 +522,149 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
   }
 
   Widget daysWeather() {
-    return Container();
+    double h = Sizes().sh * (1 - 0.08 - 0.06 - 0.05);
+    double chiph = Sizes().sh * (1 - 0.08 - 0.06 - 0.05) * 0.06;
+    return Container(
+        height: h,
+        color: Constants.currentMainColor,
+        child: Column(
+          children: [
+            Container(
+              height: chiph + h * 0.02,
+              child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: parameternames.length,
+                  itemBuilder: (c, i) {
+                    return InkWell(
+                      onTap: () {
+                        providerClass.setDaysChipIndex(i);
+                        providerClass.setAnimateBar(true);
+                        Future.delayed(Duration(seconds: 3)).then((value) {
+                          providerClass.setAnimateBar(false);
+                          return value;
+                        });
+                      },
+                      child: Container(
+                        height: chiph,
+                        margin: EdgeInsets.all(h * 0.01),
+                        padding: providerClass.hourlyChipIndex == i
+                            ? EdgeInsets.all(h * 0.008)
+                            : EdgeInsets.all(h * 0.012),
+                        decoration: BoxDecoration(
+                            border: providerClass.daysChipIndex == i
+                                ? Border.all(width: 1, color: Colors.black45)
+                                : null,
+                            color: Constants.cardcolors[i],
+                            borderRadius: BorderRadius.circular(h * 0.05),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.grey.withAlpha(150),
+                                  blurRadius: 1.5,
+                                  offset: Offset(1, 1))
+                            ]),
+                        child: FittedBox(
+                          fit: BoxFit.fitHeight,
+                          child: Text(
+                            parameternames[i],
+                            style: TextStyle(color: Colors.black),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+            ),
+            providerClass.cityModels.isNotEmpty
+                ? BarChart(
+                    xaxislist: providerClass.cityModels[0].dailyWeatherModels
+                        .map((e) => e.time)
+                        .toList(),
+                    yaxislist:
+                        providerClass.cityModels[0].dailyWeatherModels.map((e) {
+                      switch (providerClass.daysChipIndex) {
+                        case 0:
+                          return e.temp;
+
+                        case 1:
+                          return e.dew;
+
+                        case 2:
+                          return e.pressure;
+
+                        case 3:
+                          return e.humidity;
+
+                        case 4:
+                          return e.windspeed;
+
+                        default:
+                          return e.temp;
+                      }
+                    }).toList(),
+                  )
+                : BarChart()
+            //   SfCartesianChart(
+            //   primaryXAxis: CategoryAxis(),
+            //   // Chart title
+            //   title: ChartTitle(text: 'Half yearly sales analysis'),
+            //   // Enable legend
+            //   legend: Legend(isVisible: true),
+            //   // Enable tooltip
+            //   tooltipBehavior: TooltipBehavior(enable: true),
+            //   // series: <ChartSeries<_SalesData, String>>[
+            //   //   LineSeries<_SalesData, String>(
+            //   //       dataSource: data,
+            //   //       xValueMapper: (_SalesData sales, _) => sales.year,
+            //   //       yValueMapper: (_SalesData sales, _) => sales.sales,
+            //   //       name: 'Sales',
+            //   //       // Enable data label
+            //   //       dataLabelSettings: DataLabelSettings(isVisible: true))
+            //   // ]
+            //   ),
+            // Expanded(
+            //   child: Padding(
+            //     padding: const EdgeInsets.all(8.0),
+            //     //Initialize the spark charts widget
+            //     child: SfSparkBarChart.custom(
+
+            //       //Enable the trackball
+            //       trackball: SparkChartTrackball(
+            //           activationMode: SparkChartActivationMode.tap),
+            //       //Enable marker
+            //       // marker: SparkChartMarker(
+            //       //     displayMode: SparkChartMarkerDisplayMode.all),
+            //       //Enable data label
+            //       labelDisplayMode: SparkChartLabelDisplayMode.all,
+            //       xValueMapper: (int index) =>
+            //       providerClass.cityModels.isEmpty? sampledata[index][0] :
+            //        providerClass
+            //           .cityModels[0].hourlyWeatherModels[index].time,
+            //       yValueMapper: (int index) =>
+            //       providerClass.cityModels.isEmpty? sampledata[index][1] :
+            //       providerClass
+            //           .cityModels[0].hourlyWeatherModels[index].temp,
+            //       dataCount:
+            //         providerClass.cityModels.isEmpty? sampledata.length :  providerClass.cityModels[0].hourlyWeatherModels.length,
+            //     ),
+            //   ),
+            // )
+          ],
+        )
+
+        // ListView.builder(
+        //     itemCount: providerClass.cityModels[0].hourlyWeatherModels.length,
+        //     itemBuilder: (c, i) {
+        //       return Container(
+        //           height: mainhourH * 0.5,
+        //           child: Text(
+        //               ''' ${providerClass.cityModels[0].hourlyWeatherModels[i].descrp}
+        //               ${providerClass.cityModels[0].hourlyWeatherModels[i].dew}
+        //               ${providerClass.cityModels[0].hourlyWeatherModels[i].temp}
+        //                ${providerClass.cityModels[0].hourlyWeatherModels[i].humidity}
+        //                 ${providerClass.cityModels[0].hourlyWeatherModels[i].pressure}
+
+        //               '''));
+        //     }));
+        );
   }
 
   Widget hourlyWeather() {
@@ -538,6 +684,11 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                     return InkWell(
                       onTap: () {
                         providerClass.sethourlyChipIndex(i);
+                        providerClass.setAnimateBar(true);
+                        Future.delayed(Duration(seconds: 3)).then((value) {
+                          providerClass.setAnimateBar(false);
+                          return value;
+                        });
                       },
                       child: Container(
                         height: chiph,
@@ -568,14 +719,35 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                     );
                   }),
             ),
-           providerClass.cityModels.isNotEmpty? BarChart(
-              xaxislist: providerClass.cityModels[0].hourlyWeatherModels.map((e) => e.time).toList() ,
-              yaxislist:
-                  providerClass.cityModels[0].hourlyWeatherModels.map((e) {
-                return e.temp;
-              }).toList(),
-            ): 
-            BarChart()
+            providerClass.cityModels.isNotEmpty
+                ? BarChart(
+                    xaxislist: providerClass.cityModels[0].hourlyWeatherModels
+                        .map((e) => e.time)
+                        .toList(),
+                    yaxislist: providerClass.cityModels[0].hourlyWeatherModels
+                        .map((e) {
+                      switch (providerClass.hourlyChipIndex) {
+                        case 0:
+                          return e.temp;
+
+                        case 1:
+                          return e.dew;
+
+                        case 2:
+                          return e.pressure;
+
+                        case 3:
+                          return e.humidity;
+
+                        case 4:
+                          return e.windspeed;
+
+                        default:
+                          return e.temp;
+                      }
+                    }).toList(),
+                  )
+                : BarChart()
             //   SfCartesianChart(
             //   primaryXAxis: CategoryAxis(),
             //   // Chart title

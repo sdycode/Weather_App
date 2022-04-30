@@ -104,13 +104,39 @@ class ProviderClass with ChangeNotifier {
   // Parameter name in hourly data
 
   int hourlyChipIndex = 0;
+  int daysChipIndex = 0;
 
   void sethourlyChipIndex(int i) {
     hourlyChipIndex = i;
     notifyListeners();
   }
 
+  void setDaysChipIndex(int i) {
+    daysChipIndex = i;
+    notifyListeners();
+  }
+
+  // bool to animate or not animate graph
+  bool animateBar = false;
+  void setAnimateBar(bool b) {
+    animateBar = b;
+    notifyListeners();
+  }
+
   void updateUI() {
+    notifyListeners();
+  }
+
+  void removeCity(int i) {
+    cityModels.removeAt(i);
+    notifyListeners();
+  }
+
+  // show loading on when getting added city weather data
+  bool showCityDataLoading = false;
+  void setShowCityDataLoading(bool b) {
+    showCityDataLoading = b;
+
     notifyListeners();
   }
 }

@@ -1,6 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:weather/providers/provider_file.dart';
 
 class bars extends StatefulWidget {
   List<dynamic> xaxislist;
@@ -18,6 +20,7 @@ class _barsState extends State<bars> {
   List yl = [];
   @override
   Widget build(BuildContext context) {
+    ProviderClass providerClass = Provider.of<ProviderClass>(context);
     int l = min(widget.xaxislist.length, widget.yaxislist.length);
     // yl = widget.yaxislist.toList();
     // // List.copyRange(yl, widget.yaxislist);
@@ -27,7 +30,8 @@ class _barsState extends State<bars> {
     });
     // yl = [50, 60, 10, 80, 30];
     // yl.sort();
-    int span = getSpan(yl);
+    int span = 0;
+     span = getSpan(yl);
 
     return Container(
       height: widget.h,
@@ -45,17 +49,21 @@ class _barsState extends State<bars> {
                   Align(
                       alignment: Alignment.bottomCenter,
                       child: TweenAnimationBuilder<double>(
-                        builder: (BuildContext context, double? value, Widget? child) { 
+                        builder: (BuildContext context, double? value,
+                            Widget? child) {
                           return Container(
-                          width: widget.w * 0.2 * 0.5,
-                          height: value,
-                          color: Colors.blue,
-                        );
-                         },
-                        duration: Duration(seconds: 2), 
+                            width: widget.w * 0.2 * 0.5,
+                            height: providerClass.animateBar
+                                ? value
+                                : (widget.yaxislist[i] / span) * (widget.h),
+                            color: Colors.blue,
+                          );
+                        },
+                        duration: Duration(seconds: 2),
                         // Duration(seconds: ( (widget.yaxislist[i] / span)).toInt()*5),
-                        tween: Tween<double>(begin: 0, end: (widget.yaxislist[i] / span) * (widget.h) ),
-                        
+                        tween: Tween<double>(
+                            begin: 0,
+                            end: (widget.yaxislist[i] / span) * (widget.h)),
                       ))
                 ]),
                 //  (widget.yaxislist[i] / span) * (widget.h),
@@ -63,8 +71,13 @@ class _barsState extends State<bars> {
     );
   }
 
-  int getSpan(List yl) {
-    int min = 0, max = yl[0];
+  int getSpan(List yll) {
+    int min = 0, max = yll[0];
+    for (int i in List.generate(60, (index) => index)) {
+      print(
+          "====================================== = ${Random().nextInt(500000)}");
+    }
+
     yl.forEach((e) {
       if (e < min) {
         min = e;
@@ -72,7 +85,7 @@ class _barsState extends State<bars> {
         max = e;
       }
 
-      print("max min $max   $min  $e"  );
+      print("max min $max   $min  $e  & span ${(max - min)}");
     });
     return max - min;
   }
