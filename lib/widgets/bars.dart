@@ -79,46 +79,64 @@ class _barsState extends State<bars> {
             Container(
               height: widget.h,
               width: widget.w,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: l,
-                itemBuilder: (c, i) => Container(
-                    margin: EdgeInsets.only(
-                        left: widget.w * 0.02 * providerClass.shrinkFactor,
-                        right: widget.w * 0.03 * providerClass.shrinkFactor),
-                    width:
-                        (widget.w * 0.2 * 0.5) * (providerClass.shrinkFactor),
-                    height: widget.h,
-                    // color: Colors.purple,
-                    child: Column(
-                      children: [
-                        Spacer(),
-                        TweenAnimationBuilder<double>(
-                          builder: (BuildContext context, double? value,
-                              Widget? child) {
-                            return Container(
-                              height: widget.h * (1 - widget.xh),
-                              // color: Colors.amber,
-                              child: Column(
-                                children: [
-                                  Spacer(),
-                                  FittedBox(
-                                    child: Text(widget.yaxislist[i].toString()),
-                                  ),
-                                  GestureDetector(
-                                    onPanUpdate: (details) {
-                                      providerClass.setbarOverlayIndex(i);
-                                      providerClass.setShowOverlayPoint(true);
-                                    },
-                                    onPanEnd: (d) {
-                                      Future.delayed(Duration(seconds: 2))
-                                          .then((value) {
-                                            providerClass.setShowOverlayPoint(false);
-                                      providerClass.setbarOverlayIndex(-1);
-                                          });
-                                      
-                                    },
-                                    child: Container(
+              child: GestureDetector(
+                onPanUpdate: (d) {
+                  print("pan update ${d.localPosition} ");
+                  if (providerClass.shrinkFactor != 1.0) {
+                    Offset locd = d.localPosition;
+                    providerClass.seHoverOffset(locd);
+
+                    if (locd.dx > 0 &&
+                            locd.dx < (widget.w * (1 - widget.yw) - 26)
+                        //  &&
+                        // locd.dy > (widget.h * (1 - widget.xh) * (1.0) * (0.9))*(widget.yaxislist[i] / span)
+
+                        ) {
+                      int xno = ((locd.dx) /
+                              ((widget.w * (0.2 * 0.5 + 0.03)) *
+                                  (providerClass.shrinkFactor)))
+                          .toInt();
+                      if (xno >= l) {
+                        xno = l-1;
+                      }
+                      providerClass.setbarOverlayIndex(xno);
+                      providerClass.setShowOverlayPoint(true);
+                    } else {
+                      providerClass.setShowOverlayPoint(false);
+                    }
+                  } else {}
+                },
+                onPanEnd: (d) {
+                  providerClass.setShowOverlayPoint(false);
+                },
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: l,
+                  itemBuilder: (c, i) => Container(
+                      margin: EdgeInsets.only(
+                          left: widget.w * 0.03 * providerClass.shrinkFactor,
+                          right: widget.w * 0.03 * providerClass.shrinkFactor),
+                      width:
+                          (widget.w * 0.2 * 0.5) * (providerClass.shrinkFactor),
+                      height: widget.h,
+                      // color: Colors.purple,
+                      child: Column(
+                        children: [
+                          Spacer(),
+                          TweenAnimationBuilder<double>(
+                            builder: (BuildContext context, double? value,
+                                Widget? child) {
+                              return Container(
+                                height: widget.h * (1 - widget.xh),
+                                // color: Colors.amber,
+                                child: Column(
+                                  children: [
+                                    Spacer(),
+                                    FittedBox(
+                                      child:
+                                          Text(widget.yaxislist[i].toString()),
+                                    ),
+                                    Container(
                                       width: (widget.w * 0.2 * 0.5) *
                                           (providerClass.shrinkFactor),
                                       height: providerClass.animateBar
@@ -127,83 +145,105 @@ class _barsState extends State<bars> {
                                               (widget.h *
                                                   (1 - widget.xh) *
                                                   (0.7)),
-                                      color: providerClass.barOverlayIndex == i
-                                          ? Constants.chipColor
-                                          : widget.barColor,
-                                    ),
-                                  )
-                                ],
-                              ),
-                            );
-                          },
-                          duration: Duration(seconds: 2),
-                          // Duration(seconds: ( (widget.yaxislist[i] / span)).toInt()*5),
-                          tween: Tween<double>(
-                            begin: 0,
-                            end: (widget.yaxislist[i] / span) *
-                                (widget.h * (1 - widget.xh) * (0.7) * (0.9)),
-                          ),
-                        ),
-                        Container(
-                            height: widget.h * widget.xh - 20 + 8,
-                            width: (widget.w * 0.2 * 0.5) *
-                                (providerClass.shrinkFactor),
-                            color: Color.fromARGB(0, i * 10, 107, 102),
-                            child: RotatedBox(
-                              quarterTurns: 3,
-                              child: FittedBox(
-                                child: Padding(
-                                  padding: EdgeInsets.all(5),
-                                  child: (widget.xaxislist[i]),
+                                      color:
+                                          providerClass.barOverlayIndex == i &&
+                                                  providerClass.shrinkFactor !=
+                                                      1.0 &&
+                                                  providerClass.showOverlayPoint
+                                              ? Constants.chipColor
+                                              : widget.barColor,
+                                    )
+                                  ],
                                 ),
-                              ),
-                            ))
-                      ],
-                    )
+                              );
+                            },
+                            duration: Duration(seconds: 2),
+                            // Duration(seconds: ( (widget.yaxislist[i] / span)).toInt()*5),
+                            tween: Tween<double>(
+                              begin: 0,
+                              end: (widget.yaxislist[i] / span) *
+                                  (widget.h * (1 - widget.xh) * (0.7) * (0.9)),
+                            ),
+                          ),
+                          Container(
+                              height: widget.h * widget.xh - 20 + 8,
+                              width: (widget.w * 0.2 * 0.5) *
+                                  (providerClass.shrinkFactor),
+                              color: Color.fromARGB(0, i * 10, 107, 102),
+                              child: RotatedBox(
+                                quarterTurns: 3,
+                                child: FittedBox(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(5),
+                                    child: (widget.xaxislist[i]),
+                                  ),
+                                ),
+                              ))
+                        ],
+                      )
 
-                    // Stack(children: [
-                    //   Align(
-                    //     alignment: Alignment.bottomCenter,
-                    //     child: Container(
-                    //       height: widget.h * widget.xh,
-                    //       width: widget.w * 0.2 * 0.5,
-                    //       color: Color.fromARGB(255, i * 10, 107, 102),
-                    //     ),
-                    //   ),
-                    //   Padding(
-                    //     padding: EdgeInsets.only(bottom: widget.h * widget.xh-6),
-                    //     child: Align(
-                    //         alignment: Alignment.bottomCenter,
-                    //         child:
+                      // Stack(children: [
+                      //   Align(
+                      //     alignment: Alignment.bottomCenter,
+                      //     child: Container(
+                      //       height: widget.h * widget.xh,
+                      //       width: widget.w * 0.2 * 0.5,
+                      //       color: Color.fromARGB(255, i * 10, 107, 102),
+                      //     ),
+                      //   ),
+                      //   Padding(
+                      //     padding: EdgeInsets.only(bottom: widget.h * widget.xh-6),
+                      //     child: Align(
+                      //         alignment: Alignment.bottomCenter,
+                      //         child:
 
-                    ),
-                // )
-                // ]),
-                // //  (widget.yaxislist[i] / span) * (widget.h),
+                      ),
+                  // )
+                  // ]),
+                  // //  (widget.yaxislist[i] / span) * (widget.h),
 
-                // )
+                  // )
+                ),
               ),
             ),
             providerClass.showOverlayPoint
                 ? Positioned(
-                    left: widget.w * 0.25,
+                    left: widget.w * 0.2,
                     top: 30,
                     child: Container(
                         decoration: BoxDecoration(
                             color: Colors.pink.shade200.withAlpha(100),
                             borderRadius: BorderRadius.circular(10)),
+                        padding: EdgeInsets.all(8),
                         height: widget.h * 0.1,
-                        width: widget.w * 0.3,
+                        // width: widget.w * 0.3,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            widget.xaxislist[providerClass.barOverlayIndex],
+                            Text(
+                              (widget.xaxislist[providerClass.barOverlayIndex]
+                                      as Text)
+                                  .data
+                                  .toString(),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: widget.h * 0.05),
+                            ),
                             Center(
                               child: FittedBox(
-                                child: Text(" -> " +
-                                    widget.yaxislist[
-                                            providerClass.barOverlayIndex]
-                                        .toString()),
+                                child:
+                                    // Text(
+                                    //     "${providerClass.hoverPoint.dx.toStringAsFixed(1)} / ${providerClass.hoverPoint.dy.toStringAsFixed(1)} / ${widget.w * (1 - widget.yw)}  / ${providerClass.barOverlayIndex} "),
+
+                                    Text(
+                                  " -> " +
+                                      widget.yaxislist[
+                                              providerClass.barOverlayIndex]
+                                          .toString(),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: widget.h * 0.05),
+                                ),
                               ),
                             ),
                           ],
@@ -217,7 +257,7 @@ class _barsState extends State<bars> {
                 child: IconButton(
                     onPressed: () {
                       if (providerClass.shrinkFactor == 1.0) {
-                        double d = ((widget.w * 0.95) /
+                        double d = ((widget.w * 0.85) /
                                 ((widget.w * 0.2 * 0.5 + widget.w * 0.06))) /
                             (l);
                         print("shrink  $d");
@@ -226,7 +266,9 @@ class _barsState extends State<bars> {
                         providerClass.setShrinkFactor(1.0);
                       }
                     },
-                    icon: Icon(Icons.close_fullscreen)),
+                    icon: providerClass.shrinkFactor == 1.0
+                        ? Icon(Icons.close_fullscreen)
+                        : Icon(Icons.fullscreen)),
               ),
             ),
           ],
@@ -253,4 +295,6 @@ class _barsState extends State<bars> {
     });
     return max - min;
   }
+
+
 }

@@ -80,24 +80,24 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
   // List<Widget> weatherList = [];
   int weatherdayindex = 0;
   bool keyboardVisible = false;
-  late Animation<double> myAnimation;
+  // late Animation<double> myAnimation;
 
-  late AnimationController myAnimationController = AnimationController(
-    duration: Duration(seconds: 5),
-    vsync: this,
-  );
+  // late AnimationController myAnimationController = AnimationController(
+  //   duration: Duration(seconds: 5),
+  //   vsync: this,
+  // );
 
   @override
   void initState() {
     providerClass = widget.providerClass;
 
-    myAnimationController = AnimationController(
-        duration: Duration(milliseconds: 8000), vsync: this);
+    // myAnimationController = AnimationController(
+    //     duration: Duration(milliseconds: 8000), vsync: this);
 
-    myAnimation = Tween(begin: -1.0, end: 1.0).animate(myAnimationController)
-      ..addListener(() {
-        // setState(() {});
-      });
+    // myAnimation = Tween(begin: -1.0, end: 1.0).animate(myAnimationController)
+    //   ..addListener(() {
+    //     // setState(() {});
+    //   // });
     // TODO: implement initState
     super.initState();
 
@@ -160,8 +160,9 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
     return InkWell(
       onTap: () {
         providerClass.setWeathchipindex(i);
-        myAnimationController.reset();
-        myAnimationController.forward();
+        providerClass.setShrinkFactor(1.0);
+        // myAnimationController.reset();
+        // myAnimationController.forward();
       },
       child: Container(
         height: h * 0.05,
@@ -636,10 +637,8 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                     h: Sizes().sh * 0.7,
                     w: Sizes().sw * 0.95,
                     xh: 0.10,
-                    xaxisname: "Time", 
-                    yaxisname: parameternames[providerClass.daysChipIndex]
-
-                  )
+                    xaxisname: "Time",
+                    yaxisname: parameternames[providerClass.daysChipIndex])
                 : BarChart()
           ],
         ));
@@ -733,11 +732,9 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                     }).toList(),
                     h: Sizes().sh * 0.7,
                     w: Sizes().sw * 0.95,
-                     xh: 0.10,
-                       xaxisname: "Time", 
-                    yaxisname: parameternames[providerClass.daysChipIndex]
-
-                  )
+                    xh: 0.10,
+                    xaxisname: "Time",
+                    yaxisname: parameternames[providerClass.daysChipIndex])
                 : BarChart()
           ],
         )
@@ -836,7 +833,7 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                                         ? SpinKitPouringHourGlassRefined(
                                             color:
                                                 Color.fromARGB(255, 5, 15, 56),
-                                            size: Sizes().sh * 0.1)
+                                            size: Sizes().sh * 0.07)
                                         : Text(
                                             providerClass.parmvalues[i] +
                                                 " " +
@@ -887,7 +884,7 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                                         ? SpinKitPouringHourGlassRefined(
                                             color:
                                                 Color.fromARGB(255, 5, 15, 56),
-                                            size: Sizes().sh * 0.1)
+                                            size: Sizes().sh * 0.07)
                                         : Text(
                                             providerClass.parmvalues[i] +
                                                 " " +

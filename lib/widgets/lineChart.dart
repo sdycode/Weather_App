@@ -1,11 +1,12 @@
+
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:weather/providers/provider_file.dart';
-import 'dart:math';
+import 'package:weather/widgets/bars.dart';
+import 'package:weather/widgets/lines.dart';
 
-import 'bars.dart';
-
-class BarChart extends StatefulWidget {
+class LineChart extends StatefulWidget {
   List<Widget> xaxislist;
   List<double> yaxislist;
   Color barColor;
@@ -17,9 +18,9 @@ class BarChart extends StatefulWidget {
   double yh;
   String xaxisname;
   String yaxisname;
-
-  BarChart({
-    this.xaxislist = const [Text("First"), Text("Second"), Text("Third")],
+   LineChart({
+    Key? key,
+   this.xaxislist = const [Text("First"), Text("Second"), Text("Third")],
     this.yaxislist = const [10, 50, 30],
     this.barColor = Colors.blue,
     this.h = 200,
@@ -30,39 +31,32 @@ class BarChart extends StatefulWidget {
     this.yh = 0.05,
     this.xaxisname = "X axis",
     this.yaxisname = "Y axis",
-  });
+  }) : super(key: key);
 
   @override
-  State<BarChart> createState() => _BarChartState();
+  State<LineChart> createState() => _LineChartState();
 }
+  late ProviderClass providerClass;
 
-class _BarChartState extends State<BarChart> {
-  @override
-  void initState() {
-    // TODO: implement initState
-    print("init  in barchart");
 
-    super.initState();
-  }
- late ProviderClass providerClass;
+class _LineChartState extends State<LineChart> {
   @override
   Widget build(BuildContext context) {
-    print("init uild in barchart ${widget.xaxisname}  // ${widget.yaxisname}");
-      providerClass = Provider.of<ProviderClass>(context);
+     providerClass = Provider.of<ProviderClass>(context);
     return Container(
       color: Colors.amber.withAlpha(50),
       height: widget.h,
       width: widget.w,
-      child: Stack(children: [
+     child:   Stack(children: [
         Positioned(top: 0, left: widget.w * widget.yw + 8, child: yaxixLine()),
         Positioned(
             left: 0, bottom: 6 + widget.h * widget.xh, child: yaxisText()),
         Positioned(
             left: widget.w * widget.yw + 10,
             bottom: 20,
-            child: bars(
+            child: Lines(
               widget.xaxislist,
-              widget.yaxislist,
+             [ widget.yaxislist],
               widget.barColor,
               widget.h,
               widget.w,
@@ -74,10 +68,12 @@ class _BarChartState extends State<BarChart> {
         Positioned(left: widget.w * widget.yw, bottom: 0, child: xaxisText()),
         Positioned(
             left: 0, bottom: 6 + widget.h * widget.xh, child: xaxixLine()),
-      ]),
+      ])
+      
     );
   }
 
+  
   yaxisText() {
     return RotatedBox(
       quarterTurns: 3,
@@ -193,7 +189,6 @@ class _BarChartState extends State<BarChart> {
       ),
     );
   }
-
 
 
 }

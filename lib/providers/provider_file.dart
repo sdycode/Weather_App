@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import '../models/WeatherModel.dart';
 import '../models/citymodel.dart';
@@ -12,9 +13,40 @@ class ProviderClass with ChangeNotifier {
   int animatecurrntTime = 1;
 
   bool showOverlayPoint = false;
+// index to show comare dta of cities & list of cities
+
+  int compareCitiesTabIndex = 0;
+  void setcompareCitiesTabIndex(int ij) {
+    compareCitiesTabIndex = ij;
+    print("ind compareCitiesTabIndex $compareCitiesTabIndex & $ij");
+    notifyListeners();
+  }
+
   // Shoe and hide overloay point hich chill show x & y values
   void setShowOverlayPoint(bool b) {
     showOverlayPoint = b;
+    notifyListeners();
+  }
+
+  // Show point x,y on hover over bar graph
+  Offset hoverPoint = Offset.zero;
+  void seHoverOffset(Offset o) {
+    hoverPoint = o;
+    notifyListeners();
+  }
+
+  // Show point x,y on hover over line graph
+
+  Offset lineHoverPoint = Offset.zero;
+  void setLineHoverOffset(Offset o) {
+    lineHoverPoint = o;
+    notifyListeners();
+  }
+
+  // Show temporary text
+  String temptext = "";
+  void setTemptext(String t) {
+    temptext = t;
     notifyListeners();
   }
 
@@ -30,7 +62,7 @@ class ProviderClass with ChangeNotifier {
     animateCurrent = b;
   }
 
-  void setTemptext(String t) {
+  void setTempotext(String t) {
     temporarytext = t;
     print("buildcount text $temporarytext");
     notifyListeners();
@@ -66,18 +98,6 @@ class ProviderClass with ChangeNotifier {
 
   // All cities current model
   List<CityModel> cityModels = [];
-  // List<List<CityModel>> hourlyCityModels = [];
-  // List<List<CityModel>> dailyCityModels = [];
-
-  // void addHourlyCityModels(List<CityModel> hourlModels) {
-  //   hourlyCityModels.add(hourlModels);
-  //   notifyListeners();
-  // }
-
-  //  void addDailyCityModels(List<CityModel> dailyModels) {
-  //   dailyCityModels.add(dailyModels);
-  //   notifyListeners();
-  // }
 
   void addHourlyWeatherModelToCityModel(
       int i, List<WeatherModel> hourWeatherModels) {

@@ -2,11 +2,14 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:syncfusion_flutter_charts/sparkcharts.dart';
 import 'package:weather/models/WeatherModel.dart';
 import 'package:weather/models/city_data_all_models.dart';
 import 'package:weather/models/citymodel.dart';
 import 'package:weather/models/date_time_epoch.dart';
 import 'package:weather/providers/provider_file.dart';
+import 'package:weather/widgets/lineChart.dart';
 
 import '../constants/constants.dart';
 import '../constants/sizes.dart';
@@ -56,52 +59,55 @@ class _Screen2State extends State<Screen2> {
     providerClass = Provider.of<ProviderClass>(context);
 
     return Container(
-      height: Sizes().sh - (56 + providerClass.topbarh) + 6,
+      height: Sizes().sh - (56 + providerClass.topbarh) + 6-15,
       width: Sizes().sw,
       color: Constants.currentMainColor.withGreen(220),
-      child: Column(
-        children: [
-          Row(
-            children: [addCityField(), addcityButton()],
-          ),
-          providerClass.showCityDataLoading
-              ? SpinKitPouringHourGlassRefined(
-                  color: Color.fromARGB(255, 9, 16, 67), size: Sizes().sh * 0.2)
-              : Container(),
-          Expanded(
-            child: Container(width: Sizes().sw, child: citiesList()),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              print(" timeee  " +
-                  DateTime.fromMillisecondsSinceEpoch(1651314777).toString());
-              EpochDateTime e = EpochDateTime(1651314777);
-              print("epoch is ${e.day}   ${e.year}");
-            },
-            child: Text("Compare All"),
-            style: ButtonStyle(
-                backgroundColor: providerClass.cityModels.length < 2
-                    ? MaterialStateProperty.all(Colors.blueGrey.shade300)
-                    : MaterialStateProperty.all(
-                        Color.fromARGB(255, 146, 50, 50))),
-          )
-        ],
-      ),
+      child: tabs(providerClass.compareCitiesTabIndex),
     );
+  }
+
+  Widget tabs(int compareCitiesTabIndex) {
+    switch (compareCitiesTabIndex) {
+      case 0:
+        return tab0();
+      case 1:
+        return tab1();
+
+      default:
+        return tab0();
+    }
   }
 
   addCityField() {
     return Container(
-      height: Sizes().sh * 0.06,
-      width: Sizes().sw * 0.7,
-      margin: EdgeInsets.all(Sizes().sw * 0.05),
-      child: TextField(
-        controller: citynameCont,
-        decoration: InputDecoration(
-            hintText: "Enter city name...", contentPadding: EdgeInsets.zero),
-        keyboardType: TextInputType.name,
-      ),
-    );
+        height: Sizes().sh * 0.06,
+        width: Sizes().sw * 0.7,
+        margin: EdgeInsets.all(Sizes().sw * 0.05),
+        child: Stack(
+          children: [
+            Container(
+              child: TextField(
+                controller: citynameCont,
+                decoration: InputDecoration(
+                    hintText: "Enter city name...",
+                    contentPadding: EdgeInsets.zero),
+                keyboardType: TextInputType.name,
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: FittedBox(
+                child: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        citynameCont.clear();
+                      });
+                    },
+                    icon: Icon(Icons.close)),
+              ),
+            )
+          ],
+        ));
   }
 
   addcityButton() {
@@ -177,13 +183,8 @@ class _Screen2State extends State<Screen2> {
               cityData2.current.pressure,
               cityData2.current.humidity,
               cityData2.current.windSpeed,
-              cityData2.current.dt, 
-              EpochDateTime(  cityData2.current.dt.toInt()
-              
-              )
-              
-        
-              );
+              cityData2.current.dt,
+              EpochDateTime(cityData2.current.dt.toInt()));
 
           List<WeatherModel> hourlymodels = [];
           List<WeatherModel> dailymodels = [];
@@ -197,11 +198,8 @@ class _Screen2State extends State<Screen2> {
                 cityData2.hourly[i].pressure,
                 cityData2.hourly[i].humidity,
                 cityData2.hourly[i].windSpeed,
-                cityData2.hourly[i].dt, 
-                
-                 EpochDateTime(  cityData2.hourly[i].dt.toInt())
-             
-                );
+                cityData2.hourly[i].dt,
+                EpochDateTime(cityData2.hourly[i].dt.toInt()));
 
             hourlymodels.add(hourlytempmodel);
           }
@@ -215,11 +213,8 @@ class _Screen2State extends State<Screen2> {
                 cityData2.daily[i].pressure,
                 cityData2.daily[i].humidity,
                 cityData2.daily[i].windSpeed,
-                cityData2.daily[i].dt, 
-                
-                                 EpochDateTime(  cityData2.daily[i].dt.toInt())
-
-                );
+                cityData2.daily[i].dt,
+                EpochDateTime(cityData2.daily[i].dt.toInt()));
 
             dailymodels.add(dailyTempModel);
           }
@@ -313,7 +308,7 @@ class _Screen2State extends State<Screen2> {
                 return Transform.translate(
                   offset: value,
                   child: Container(
-                    height: Sizes().sh * 0.08,
+                    height: Sizes().sh * 0.06,
                     width: Sizes().sw,
                     margin: EdgeInsets.only(
                       right: Sizes().sw * 0.04,
@@ -328,7 +323,7 @@ class _Screen2State extends State<Screen2> {
                     child: Row(
                       children: [
                         Container(
-                          height: Sizes().sh * 0.08,
+                          height: Sizes().sh * 0.06,
                           width: Sizes().sw * 0.7,
                           child: FittedBox(
                             child: Padding(
@@ -354,7 +349,7 @@ class _Screen2State extends State<Screen2> {
                   ),
                 );
               },
-              duration: Duration(seconds: 1),
+              duration: Duration(milliseconds: 300),
               tween: Tween<Offset>(
                   begin: Offset(0, -(50 * i).toDouble()), end: Offset.zero),
             );
@@ -372,4 +367,121 @@ class _Screen2State extends State<Screen2> {
       return text;
     }
   }
+
+  Widget tab0() {
+    return Column(
+      children: [
+        Row(
+          children: [addCityField(), addcityButton()],
+        ),
+        providerClass.showCityDataLoading
+            ? SpinKitPouringHourGlassRefined(
+                color: Color.fromARGB(255, 9, 16, 67), size: Sizes().sh * 0.2)
+            : Container(),
+        Expanded(
+          child: Container(width: Sizes().sw, child: citiesList()),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            // print(" timeee  " +
+            //     DateTime.fromMillisecondsSinceEpoch(1651314777).toString());
+            // EpochDateTime e = EpochDateTime(1651314777);
+            // print("epoch is ${e.day}   ${e.year}");
+
+            providerClass.setcompareCitiesTabIndex(1);
+          },
+          child: Text("Compare All"),
+          style: ButtonStyle(
+              backgroundColor: providerClass.cityModels.length < 2
+                  ? MaterialStateProperty.all(Colors.blueGrey.shade300)
+                  : MaterialStateProperty.all(
+                      Color.fromARGB(255, 146, 50, 50))),
+        )
+      ],
+    );
+  }
+
+  Widget tab1() {
+    // return Container(
+    //   height: 300, 
+    //   width: 300,
+    //   color: Colors.purple,
+    //   child: Column( 
+    //     children: [Text("dsd"), 
+    //     Text("jdk"), 
+    //     Spacer(), 
+        
+        
+    //     Container( 
+    //       height:10, 
+    //       color: Colors.red,
+    //     )],
+    //   ),
+    // );
+    return Container(
+      height: Sizes().sh * 0.7,
+      color: Color.fromARGB(255, 228, 191, 207),
+      child: Column(
+        children: [
+          Spacer(),
+          Center(
+            child: Text(
+                "${providerClass.lineHoverPoint}  // ${providerClass.temptext}"),
+          ),
+          Spacer(),
+          LineChart(
+              xaxislist: providerClass.cityModels[0].hourlyWeatherModels
+                  .map((e) => Text(e.epTime.hour.toString()))
+                  .toList(),
+              yaxislist:
+                  providerClass.cityModels[0].hourlyWeatherModels.map((e) {
+                switch (providerClass.daysChipIndex) {
+                  case 0:
+                    return e.temp;
+
+                  case 1:
+                    return e.dew;
+
+                  case 2:
+                    return e.pressure;
+
+                  case 3:
+                    return e.humidity;
+
+                  case 4:
+                    return e.windspeed;
+
+                  default:
+                    return e.temp;
+                }
+              }).toList(),
+              h: Sizes().sh * 0.7,
+              w: Sizes().sw * 0.95,
+              xh: 0.10,
+              xaxisname: "Time",
+              yaxisname: parameternames[providerClass.hourlyChipIndex]),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: IconButton(
+                onPressed: () {
+                  providerClass.setcompareCitiesTabIndex(0);
+                },
+                icon: Icon(Icons.close)),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class ChartData {
+  ChartData(this.x, this.y);
+  final int x;
+  final double? y;
+}
+
+class Data {
+  Data(this.x, this.y);
+  final Widget? x;
+  final double? y;
 }
