@@ -79,7 +79,7 @@ class ProviderClass with ChangeNotifier {
     shrinkFactor = d;
     notifyListeners();
   }
-
+ List<String> units = ["\u00B0 C", "\u00B0 C", "hPa", "%", "m/s"];
   List<String> parmvalues = ["--", "--", "--", "--", "--"];
   List<String> parameternames = [
     'Temperature',
@@ -109,9 +109,22 @@ class ProviderClass with ChangeNotifier {
     cityModels[i].dailyWeatherModels = dayWeatherModels;
   }
 
-  void addNewCityModel(CityModel cityModel) {
-    cityModels.add(cityModel);
+  bool addNewCityModel(CityModel cityModel) {
+    bool isNewCity = true;
+    cityModels.forEach((e) {
+      print('citynamme ${e.cityname} / ${cityModel.cityname}');
+      if (e.cityname.toLowerCase() == cityModel.cityname.toLowerCase()) {
+        isNewCity = false;
+        print(
+            'citynamme condiii $isNewCity ${e.cityname} / ${cityModel.cityname}');
+      }
+    });
+    if (isNewCity) {
+      cityModels.add(cityModel);
+    }
+
     notifyListeners();
+    return isNewCity;
   }
 
   void addHourlyWeatherModel(WeatherModel weatherModel, int cityNo) {
@@ -141,6 +154,28 @@ class ProviderClass with ChangeNotifier {
     print("object parmslist $parmvalues");
     // notifyListeners();
     return parmvalues;
+  }
+
+  setParameterValuesForCity(WeatherModel currentweathermodel) {
+    List<String> parametervalue = [];
+    parametervalue.clear();
+    parametervalue
+        .add(((currentweathermodel.temp).toStringAsFixed(2)).toString());
+    parametervalue
+        .add(((currentweathermodel.dew).toStringAsFixed(2)).toString());
+    parametervalue.add((currentweathermodel.pressure).toInt().toString());
+    parametervalue.add((currentweathermodel.humidity).toInt().toString());
+
+    parametervalue.add((currentweathermodel.windspeed).toInt().toString());
+    // widget.providerClass.setParamValues(parametervalue);
+    // providerClass.setAnimateCurrent(true);
+    // Future.delayed(Duration(seconds: providerClass.animatecurrntTime))
+    //     .then((value) {
+    //   providerClass.setAnimateCurrent(false);
+    // });
+
+    return parametervalue;
+
   }
   // Weather chip index :
 
@@ -196,5 +231,26 @@ class ProviderClass with ChangeNotifier {
     topbarh = top;
     // notifyListeners();
     // removed as called in build
+  }
+
+  int chipIndexForComparingCities = 0;
+  void setChipIndexForComparingCities(int i) {
+    chipIndexForComparingCities = i;
+    notifyListeners();
+  }
+
+  int currentCityIndex = 0;
+  void setCurrentCityIndex(int i) {
+    if (i >= cityModels.length) {
+      return;
+    }
+    currentCityIndex = i;
+    notifyListeners();
+  }
+
+  int selectedMainTabIndex = 0;
+  void setSelectedMainTabIndex(int index) {
+    selectedMainTabIndex = index;
+    notifyListeners();
   }
 }

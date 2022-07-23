@@ -71,7 +71,7 @@ class _BarChartState extends State<BarChart> {
               widget.yw,
               widget.yh,
             )),
-        Positioned(left: widget.w * widget.yw, bottom: 0, child: xaxisText()),
+        // Positioned(left: widget.w * widget.yw, bottom: 0, child: xaxisText()),
         Positioned(
             left: 0, bottom: 6 + widget.h * widget.xh, child: xaxixLine()),
       ]),

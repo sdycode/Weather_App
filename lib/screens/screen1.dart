@@ -7,8 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:syncfusion_flutter_charts/sparkcharts.dart';
+
 import 'package:weather/models/citymodel.dart';
 import 'package:weather/screens/main_screen.dart';
 import 'package:weather/widgets/bar_chart.dart';
@@ -25,9 +24,11 @@ import '../utils/checkinternet.dart';
 class Screen1 extends StatefulWidget {
   double topbarh;
   ProviderClass providerClass;
+  GlobalKey<ScaffoldState> scaffoldKey;
   Screen1(
     this.topbarh,
-    this.providerClass, {
+    this.providerClass,
+    this.scaffoldKey, {
     Key? key,
   }) : super(key: key);
   // Screen1( double topbarh, {Key? key}) : super(key: key);
@@ -195,32 +196,25 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
     return Container(
       height: Sizes().sh * (0.2),
       width: Sizes().sw * (0.85 - 0.2),
-      margin: EdgeInsets.only(left: Sizes().sw * 0.1, right: Sizes().sw * 0.1),
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(Sizes().sh * 0.03),
-          color: Colors.white),
+      // margin: EdgeInsets.only(left: Sizes().sw * 0.1, right: Sizes().sw * 0.1),
+      // decoration: BoxDecoration(
+      //     borderRadius: BorderRadius.circular(Sizes().sh * 0.03),
+      //     // color: Colors.white
+
+      //     ),
       child: Center(
-        child: Stack(children: [
-          TextField(
-            controller: citynamecont,
-            textAlign: TextAlign.center,
-            onChanged: (d) {
-              // providerClass.setTemptext(d);
-            },
-            onSubmitted: (d) {
-              // SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
-            },
-            keyboardType: TextInputType.name,
-            decoration: InputDecoration(
-              contentPadding: EdgeInsets.all(10),
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(Sizes().sh * 0.05)),
-              hintText: 'Enter city name',
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: InkWell(
+        child: TextField(
+          controller: citynamecont,
+          textAlign: TextAlign.center,
+          onChanged: (d) {
+            // providerClass.setTemptext(d);
+          },
+          onSubmitted: (d) {
+            // SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
+          },
+          keyboardType: TextInputType.name,
+          decoration: InputDecoration(
+            suffixIcon: InkWell(
               onTap: () {
                 citynamecont.clear();
               },
@@ -229,8 +223,15 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                 child: Icon(Icons.close_rounded),
               ),
             ),
-          )
-        ]),
+            fillColor: Colors.amber,
+            contentPadding: EdgeInsets.all(10),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(Sizes().sh * 0.03)),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(Sizes().sh * 0.03)),
+            hintText: 'Enter city name',
+          ),
+        ),
       ),
     );
   }
@@ -239,7 +240,7 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
     FocusManager.instance.primaryFocus?.unfocus();
     // SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
 
-    bool checked = await CheckInternet.instance.check();
+    bool checked = await checkConnectivityStatus();
     if (checked) {
       if (citynamecont.text.isNotEmpty) {
         providerClass.setLoadingInSingleCity(true);
@@ -248,127 +249,20 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
             "http://api.openweathermap.org/geo/1.0/direct?q=${citynamecont.text}&appid=${Constants.apikey1}";
         // String url1 =
         //     "https://api.openweathermap.org/geo/1.0/direct?q=nashik&appid=2b16938a6e324e1cfe9a09b08fae6d53";
-        final response = await http.get(Uri.parse(url));
-        print("predata ${response}");
-        List responseData = json.decode(response.body);
-        if (responseData.isEmpty) {
-          SnackBar nocitysnackbar = SnackBar(
-              backgroundColor: Colors.red.withAlpha(220),
-              content: Container(
-                  child: Text(
-                      "Sorry data is not available for ${citynamecont.text}")));
-          // ignore: use_build_context_synchronously
-          ScaffoldMessenger.of(context).showSnackBar(nocitysnackbar);
-          providerClass.setLoadingInSingleCity(false);
-        } else {
-          print("data ${responseData}");
-          citynameresponse = responseData[0]['name'];
-          lat = responseData[0]['lat'].toString();
-          long = responseData[0]['lon'].toString();
-          String oneapicallurl =
-              "https://api.openweathermap.org/data/2.5/onecall?lat=$lat&lon=$long&appid=${Constants.apikey2}";
-          // https://api.openweathermap.org/data/2.5/onecall?lat=20.0112475&lon=73.7902364&appid=2b16938a6e324e1cfe9a09b08fae6d53
-          print('url - $oneapicallurl');
 
-          final oneapiresponse = await http.get(Uri.parse(oneapicallurl));
+        try {
+          final response = await http.get(Uri.parse(url));
 
-          var oneapiResponse = json.decode(oneapiresponse.body);
-          print(oneapiResponse.toString());
+          await decodeCityDataFromResponse(response);
+        } catch (e) {
+          SnackBar snackbar = SnackBar(content: Text("Error : $e"));
 
-          CityData2 cityData2 = CityData2.fromJson(oneapiResponse);
-          // imgurl =   "http://openweathermap.org/img/wn/10d@2x.png";
-
-          imgurl =
-              "http://openweathermap.org/img/wn/${cityData2.current.weather[0].icon}@2x.png";
-
-          WeatherModel currentweathermodel = WeatherModel(
-              cityData2.current.weather[0].description,
-              imgurl,
-              double.parse(
-                  (cityData2.current.temp - 273.15).toStringAsFixed(2)),
-              double.parse(
-                  (cityData2.current.dewPodouble - 273.15).toStringAsFixed(2)),
-              cityData2.current.pressure,
-              cityData2.current.humidity,
-              cityData2.current.windSpeed,
-              cityData2.current.dt,
-              EpochDateTime(cityData2.current.dt.toInt()));
-
-          List<WeatherModel> hourlymodels = [];
-          List<WeatherModel> dailymodels = [];
-
-          for (int i = 0; i < cityData2.hourly.length; i++) {
-            WeatherModel hourlytempmodel = WeatherModel(
-                cityData2.hourly[i].weather[0].description,
-                imgurl,
-                double.parse(
-                    (cityData2.hourly[i].temp - 273.15).toStringAsFixed(2)),
-                double.parse((cityData2.hourly[i].dewPodouble - 273.15)
-                    .toStringAsFixed(2)),
-                cityData2.hourly[i].pressure,
-                cityData2.hourly[i].humidity,
-                cityData2.hourly[i].windSpeed,
-                cityData2.hourly[i].dt,
-                EpochDateTime(cityData2.hourly[i].dt.toInt()));
-
-            hourlymodels.add(hourlytempmodel);
-          }
-
-          for (int i = 0; i < cityData2.daily.length; i++) {
-            WeatherModel dailyTempModel = WeatherModel(
-                cityData2.daily[i].weather[0].description,
-                imgurl,
-                double.parse(
-                    (cityData2.daily[i].temp!.day - 273.15).toStringAsFixed(2)),
-                double.parse((cityData2.daily[i].dewPodouble - 273.15)
-                    .toStringAsFixed(2)),
-                cityData2.daily[i].pressure,
-                cityData2.daily[i].humidity,
-                cityData2.daily[i].windSpeed,
-                cityData2.daily[i].dt,
-                EpochDateTime(cityData2.daily[i].dt.toInt()));
-
-            dailymodels.add(dailyTempModel);
-          }
-
-          // providerClass.addHourlyWeatherModel(weatherModel, cityNo)
-
-          providerClass.setLoadingInSingleCity(false);
-          CityModel cityModel = CityModel(citynamecont.text,
-              currentweathermodel, hourlymodels, dailymodels);
-          providerClass.addNewCityModel(cityModel);
-
-          // setState(() {
-          parametervalue.clear();
-          parametervalue
-              .add(((currentweathermodel.temp).toStringAsFixed(2)).toString());
-          parametervalue
-              .add(((currentweathermodel.dew).toStringAsFixed(2)).toString());
-          parametervalue.add((currentweathermodel.pressure).toInt().toString());
-          parametervalue.add((currentweathermodel.humidity).toInt().toString());
-
-          parametervalue
-              .add((currentweathermodel.windspeed).toInt().toString());
-          // widget.providerClass.setParamValues(parametervalue);
-          providerClass.setAnimateCurrent(true);
-          Future.delayed(Duration(seconds: providerClass.animatecurrntTime))
-              .then((value) {
-            providerClass.setAnimateCurrent(false);
-          });
-          providerClass.setParamValues(parametervalue);
-
-          print('***************88888888888**');
-          print(parametervalue);
-          print('*****************');
-          // citynameresponse = responseData.toString();
-
-          // oneapiresponsedata = oneapiResponse.toString();
-          // });
+          ScaffoldMessenger.of(context).showSnackBar(snackbar);
         }
       } else {
         SnackBar snackbar =
             const SnackBar(content: Text("Please enter city name ..."));
-        // ignore: use_build_context_synchronously
+
         ScaffoldMessenger.of(context).showSnackBar(snackbar);
       }
     } else {
@@ -505,18 +399,8 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
             height: Sizes().sh * 0.06,
             // color: Colors.red,
             child: Row(
-              children: [
-                citynameTextField(),
-                InkWell(
-                  onTap: getDetailsbyCityName,
-                  splashColor: Constants.chipColor,
-                  radius: Sizes().sh * 0.06,
-                  child: Container(
-                      width: Sizes().sh * 0.06,
-                      height: Sizes().sh * 0.06,
-                      child: Icon(Icons.search)),
-                )
-              ],
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [menuButton(), citynameTextField(), searchButton()],
             ),
           ),
 
@@ -528,12 +412,23 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
             child: SingleChildScrollView(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   animatedWidget(0),
                   animatedWidget(1),
                   animatedWidget(2),
                   animatedWidget(3),
                   animatedWidget(4),
+                  if (providerClass.cityModels.isNotEmpty)
+                    weatherImageAndDescr(),
+                  if (providerClass.cityModels.isNotEmpty)
+                    Text(
+                      providerClass
+                          .cityModels[providerClass.currentCityIndex].cityname,
+                      style: TextStyle(
+                          fontSize: Sizes().sw * 0.06,
+                          fontWeight: FontWeight.w600),
+                    ),
                 ],
               ),
             ),
@@ -607,13 +502,19 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                     );
                   }),
             ),
+
             providerClass.cityModels.isNotEmpty
                 ? BarChart(
-                    xaxislist: providerClass.cityModels[0].dailyWeatherModels
+                    barColor: Constants.cardcolors[providerClass.daysChipIndex],
+                    xaxislist: providerClass
+                        .cityModels[providerClass.currentCityIndex]
+                        .dailyWeatherModels
                         .map((e) => Text(e.epTime.hour.toString()))
                         .toList(),
-                    yaxislist:
-                        providerClass.cityModels[0].dailyWeatherModels.map((e) {
+                    yaxislist: providerClass
+                        .cityModels[providerClass.currentCityIndex]
+                        .dailyWeatherModels
+                        .map((e) {
                       switch (providerClass.daysChipIndex) {
                         case 0:
                           return e.temp;
@@ -638,8 +539,26 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                     w: Sizes().sw * 0.95,
                     xh: 0.10,
                     xaxisname: "Time",
-                    yaxisname: parameternames[providerClass.daysChipIndex])
-                : BarChart()
+                    yaxisname: parameternames[providerClass.daysChipIndex] +
+                        " ( ${providerClass.units[providerClass.daysChipIndex]} )")
+                : Expanded(
+                    child: Center(
+                      child: InkWell(
+                        onTap: () {
+                          providerClass.setWeathchipindex(0);
+                        },
+                        child: const Text(
+                          'Please add city and get weather data !!! ',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.w600,
+                              color: Color.fromARGB(255, 6, 26, 87)),
+                        ),
+                      ),
+                    ),
+                  )
+            // BarChart()
           ],
         ));
   }
@@ -705,10 +624,14 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                 ? BarChart(
                     barColor:
                         Constants.cardcolors[providerClass.hourlyChipIndex],
-                    xaxislist: providerClass.cityModels[0].hourlyWeatherModels
+                    xaxislist: providerClass
+                        .cityModels[providerClass.currentCityIndex]
+                        .hourlyWeatherModels
                         .map((e) => Text(e.epTime.minute.toString()))
                         .toList(),
-                    yaxislist: providerClass.cityModels[0].hourlyWeatherModels
+                    yaxislist: providerClass
+                        .cityModels[providerClass.currentCityIndex]
+                        .hourlyWeatherModels
                         .map((e) {
                       switch (providerClass.hourlyChipIndex) {
                         case 0:
@@ -734,8 +657,26 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                     w: Sizes().sw * 0.95,
                     xh: 0.10,
                     xaxisname: "Time",
-                    yaxisname: parameternames[providerClass.daysChipIndex])
-                : BarChart()
+                    yaxisname: parameternames[providerClass.hourlyChipIndex] +
+                        " ( ${providerClass.units[providerClass.hourlyChipIndex]} )")
+                : Expanded(
+                    child: Center(
+                      child: InkWell(
+                        onTap: () {
+                          providerClass.setWeathchipindex(0);
+                        },
+                        child: const Text(
+                          'Please add city and get weather data !!! ',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.w600,
+                              color: Color.fromARGB(255, 6, 26, 87)),
+                        ),
+                      ),
+                    ),
+                  )
+            // BarChart()
           ],
         )
 
@@ -756,12 +697,10 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
         );
   }
 
-  void checknet() async {
-    await CheckInternet.instance.check().then((conn) {
-      print("net before $conn && $isConnection");
-      isConnection = conn;
-      print("net $conn && $isConnection");
+  Future checknet() async {
+    bool isConnection = await checkConnectivityStatus().then((value) {
       providerClass.updateUI();
+      return value;
     });
   }
 
@@ -799,7 +738,7 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
         return Transform.translate(
           offset: providerClass.animateCurrent ? value : Offset(0, 0),
           child: Container(
-            height: Sizes().sh * 0.08,
+            height: Sizes().sh * 0.06,
             width: Sizes().sw * 0.8,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(Sizes().sh * 0.04),
@@ -841,7 +780,7 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                                             textAlign: TextAlign.center,
                                             style: TextStyle(
                                                 fontSize:
-                                                    Sizes().sh * 0.1 * 0.3),
+                                                    Sizes().sh * 0.1 * 0.2),
                                           ),
                                     margin: EdgeInsets.only(
                                         left: Sizes().sw * 0.02,
@@ -891,7 +830,7 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
                                                 units[i],
                                             style: TextStyle(
                                                 fontSize:
-                                                    Sizes().sh * 0.1 * 0.3),
+                                                    Sizes().sh * 0.1 * 0.2),
                                           ),
                                     margin: EdgeInsets.only(
                                         left: Sizes().sw * 0.02,
@@ -915,6 +854,186 @@ class _Screen1State extends State<Screen1> with TickerProviderStateMixin {
           : Tween<Offset>(
               begin: Offset(Sizes().sw * (1), 0), end: Offset(0, 0)),
     );
+  }
+
+  void snack(String s) {
+    SnackBar snackBar = SnackBar(content: Text(s));
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  weatherImageAndDescr() {
+    providerClass.cityModels.forEach(
+      (e) {
+        print(
+            'imgg ${e.cityname} and ${e.currentWeatherModel.icon} --- ${providerClass.currentCityIndex}');
+      },
+    );
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        providerClass.cityModels[providerClass.currentCityIndex]
+                    .currentWeatherModel.icon ==
+                'noimg'
+            ? Image.asset(
+                'assets/noimg.png',
+                width: Sizes().sw * 0.35,
+                height: Sizes().sw * 0.35,
+              )
+            : Image.network(
+                providerClass.cityModels[providerClass.currentCityIndex]
+                    .currentWeatherModel.icon,
+                width: Sizes().sw * 0.35,
+                height: Sizes().sw * 0.35,
+              ),
+        Text(
+          providerClass.cityModels[providerClass.currentCityIndex]
+              .currentWeatherModel.descrp,
+          style: TextStyle(
+              fontSize: Sizes().sw * 0.04, fontWeight: FontWeight.w600),
+        )
+      ],
+    );
+  }
+
+  menuButton() {
+    return InkWell(
+      onTap: () {
+        widget.scaffoldKey.currentState!.openDrawer();
+      },
+      splashColor: Constants.chipColor,
+      radius: Sizes().sh * 0.06,
+      child: Container(
+          width: Sizes().sh * 0.06,
+          height: Sizes().sh * 0.06,
+          child: Icon(Icons.menu_outlined)),
+    );
+  }
+
+  searchButton() {
+    return InkWell(
+      onTap: getDetailsbyCityName,
+      splashColor: Constants.chipColor,
+      radius: Sizes().sh * 0.06,
+      child: Container(
+          width: Sizes().sh * 0.06,
+          height: Sizes().sh * 0.06,
+          child: Icon(Icons.search)),
+    );
+  }
+
+  decodeCityDataFromResponse(http.Response response) async {
+    List responseData = json.decode(response.body);
+    if (responseData.isEmpty) {
+      SnackBar nocitysnackbar = SnackBar(
+          backgroundColor: Colors.red.withAlpha(220),
+          content: Container(
+              child: Text(
+                  "Sorry data is not available for ${citynamecont.text}")));
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(nocitysnackbar);
+      providerClass.setLoadingInSingleCity(false);
+    } else {
+      print("data ${responseData}");
+      citynameresponse = responseData[0]['name'];
+      lat = responseData[0]['lat'].toString();
+      long = responseData[0]['lon'].toString();
+      String oneapicallurl =
+          "https://api.openweathermap.org/data/2.5/onecall?lat=$lat&lon=$long&appid=${Constants.apikey2}";
+      // https://api.openweathermap.org/data/2.5/onecall?lat=20.0112475&lon=73.7902364&appid=2b16938a6e324e1cfe9a09b08fae6d53
+      print('url - $oneapicallurl');
+
+      try {
+        final oneapiresponse = await http.get(Uri.parse(oneapicallurl));
+        var oneapiResponse = json.decode(oneapiresponse.body);
+        print(oneapiResponse.toString());
+
+        CityData2 cityData2 = CityData2.fromJson(oneapiResponse);
+        // imgurl =   "http://openweathermap.org/img/wn/10d@2x.png";
+        print(
+            'imggg ${cityData2.current.weather[0].icon} // ${citynamecont.text}');
+        imgurl =
+            "http://openweathermap.org/img/wn/${cityData2.current.weather[0].icon}@2x.png";
+
+        WeatherModel currentweathermodel = WeatherModel(
+            cityData2.current.weather[0].description,
+            imgurl,
+            double.parse((cityData2.current.temp - 273.15).toStringAsFixed(2)),
+            double.parse(
+                (cityData2.current.dewPodouble - 273.15).toStringAsFixed(2)),
+            cityData2.current.pressure,
+            cityData2.current.humidity,
+            cityData2.current.windSpeed,
+            cityData2.current.dt,
+            EpochDateTime(cityData2.current.dt.toInt()));
+        currentweathermodel.imgurl = imgurl;
+        List<WeatherModel> hourlymodels = [];
+        List<WeatherModel> dailymodels = [];
+
+        for (int i = 0; i < cityData2.hourly.length; i++) {
+          WeatherModel hourlytempmodel = WeatherModel(
+              cityData2.hourly[i].weather[0].description,
+              imgurl,
+              double.parse(
+                  (cityData2.hourly[i].temp - 273.15).toStringAsFixed(2)),
+              double.parse((cityData2.hourly[i].dewPodouble - 273.15)
+                  .toStringAsFixed(2)),
+              cityData2.hourly[i].pressure,
+              cityData2.hourly[i].humidity,
+              cityData2.hourly[i].windSpeed,
+              cityData2.hourly[i].dt,
+              EpochDateTime(cityData2.hourly[i].dt.toInt()));
+
+          hourlymodels.add(hourlytempmodel);
+        }
+
+        for (int i = 0; i < cityData2.daily.length; i++) {
+          WeatherModel dailyTempModel = WeatherModel(
+              cityData2.daily[i].weather[0].description,
+              imgurl,
+              double.parse(
+                  (cityData2.daily[i].temp!.day - 273.15).toStringAsFixed(2)),
+              double.parse(
+                  (cityData2.daily[i].dewPodouble - 273.15).toStringAsFixed(2)),
+              cityData2.daily[i].pressure,
+              cityData2.daily[i].humidity,
+              cityData2.daily[i].windSpeed,
+              cityData2.daily[i].dt,
+              EpochDateTime(cityData2.daily[i].dt.toInt()));
+
+          dailymodels.add(dailyTempModel);
+        }
+
+        providerClass.setLoadingInSingleCity(false);
+        CityModel cityModel = CityModel(
+            citynamecont.text, currentweathermodel, hourlymodels, dailymodels);
+        bool isNewCityAdded = providerClass.addNewCityModel(cityModel);
+        if (!isNewCityAdded) {
+          snack('This city is already added');
+        }
+        providerClass.currentCityIndex = providerClass.cityModels.length - 1;
+        parametervalue.clear();
+        parametervalue
+            .add(((currentweathermodel.temp).toStringAsFixed(2)).toString());
+            
+        parametervalue
+            .add(((currentweathermodel.dew).toStringAsFixed(2)).toString());
+        parametervalue.add((currentweathermodel.pressure).toInt().toString());
+        parametervalue.add((currentweathermodel.humidity).toInt().toString());
+
+        parametervalue.add((currentweathermodel.windspeed).toInt().toString());
+
+        providerClass.setAnimateCurrent(true);
+        Future.delayed(Duration(seconds: providerClass.animatecurrntTime))
+            .then((value) {
+          providerClass.setAnimateCurrent(false);
+        });
+        providerClass.setParamValues(parametervalue);
+      } catch (e) {
+        SnackBar snackbar = SnackBar(content: Text("Error no lat-long : $e"));
+
+        ScaffoldMessenger.of(context).showSnackBar(snackbar);
+      }
+    }
   }
 }
 

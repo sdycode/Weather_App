@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:weather/screens/screen1.dart';
 import 'package:weather/screens/screen2.dart';
+import 'package:weather/widgets/app_drawer.dart';
 
 import '../constants/constants.dart';
 import '../providers/provider_file.dart';
@@ -44,14 +45,14 @@ class MainScreenState extends State<MainScreen> {
       print("Build Completed");
     });
   }
-
+GlobalKey<ScaffoldState>_scaffoldKey = GlobalKey<ScaffoldState>();
   @override
   Widget build(BuildContext context) {
     print("visi top in main  ${MediaQuery.of(context).viewPadding.top}");
     double h = MediaQuery.of(context).size.height;
     double w = MediaQuery.of(context).size.width;
 
-     providerClass = Provider.of<ProviderClass>(
+    providerClass = Provider.of<ProviderClass>(
       context,
     );
     providerClass.setTopBarHeight(MediaQuery.of(context).viewPadding.top);
@@ -59,24 +60,27 @@ class MainScreenState extends State<MainScreen> {
         "build in main ${MediaQuery.of(context).viewInsets.top}  //  ${MediaQuery.of(context).viewPadding.top} ");
 //  SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
     tabs = [
-      Screen1(MediaQuery.of(context).viewPadding.top, providerClass),
+      Screen1(MediaQuery.of(context).viewPadding.top, providerClass, _scaffoldKey),
       Screen2(),
     ];
 
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: AppDrawer(),
+
         resizeToAvoidBottomInset: false,
         bottomNavigationBar: BottomNavyBar(
           backgroundColor: Constants.currentMainColor,
 
           containerHeight: h * 0.08,
-          selectedIndex: _selectedIndex,
+          selectedIndex: providerClass.selectedMainTabIndex,
 
           showElevation: false, // use this to remove appBar's elevation
-          onItemSelected: (index) => setState(() {
-            _selectedIndex = index;
+          onItemSelected: (index)   {
+            providerClass.setSelectedMainTabIndex(index);
             // _pageController.animateToPage(index,
             //     duration: Duration(milliseconds: 300), curve: Curves.ease);
-          }),
+          },
           items: [
             BottomNavyBarItem(
               icon: Icon(Icons.apps),
@@ -104,7 +108,7 @@ class MainScreenState extends State<MainScreen> {
               SizedBox(
                   // height: MediaQuery.of(context).viewPadding.top,
                   ),
-              tabs[_selectedIndex],
+              tabs[providerClass.selectedMainTabIndex],
               Container(
                 height: MediaQuery.of(context).viewPadding.bottom,
               )

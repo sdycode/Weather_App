@@ -1,15 +1,16 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:syncfusion_flutter_charts/sparkcharts.dart';
+
 import 'package:weather/models/WeatherModel.dart';
 import 'package:weather/models/city_data_all_models.dart';
 import 'package:weather/models/citymodel.dart';
 import 'package:weather/models/date_time_epoch.dart';
 import 'package:weather/providers/provider_file.dart';
 import 'package:weather/widgets/lineChart.dart';
+import 'package:weather/widgets/multi_bar_chart.dart';
 
 import '../constants/constants.dart';
 import '../constants/sizes.dart';
@@ -29,7 +30,8 @@ class Screen2 extends StatefulWidget {
 
 class _Screen2State extends State<Screen2> {
   TextEditingController citynameCont = TextEditingController();
-
+  double h = Sizes().sh;
+  double w = Sizes().sw;
   late ProviderClass providerClass;
 
   bool isConnection = false;
@@ -59,7 +61,7 @@ class _Screen2State extends State<Screen2> {
     providerClass = Provider.of<ProviderClass>(context);
 
     return Container(
-      height: Sizes().sh - (56 + providerClass.topbarh) + 6-15,
+      height: Sizes().sh - (56 + providerClass.topbarh) + 6 - 15,
       width: Sizes().sw,
       color: Constants.currentMainColor.withGreen(220),
       child: tabs(providerClass.compareCitiesTabIndex),
@@ -99,9 +101,11 @@ class _Screen2State extends State<Screen2> {
               child: FittedBox(
                 child: IconButton(
                     onPressed: () {
-                      setState(() {
-                        citynameCont.clear();
-                      });
+                      if (!providerClass.showCityDataLoading) {
+                        setState(() {
+                          citynameCont.clear();
+                        });
+                      }
                     },
                     icon: Icon(Icons.close)),
               ),
@@ -119,8 +123,10 @@ class _Screen2State extends State<Screen2> {
           fit: BoxFit.contain,
           child: InkWell(
               onTap: () {
-                citynameCont.text = getCamelCase(citynameCont.text);
-                getCityData(citynameCont.text);
+                if (!providerClass.showCityDataLoading) {
+                  citynameCont.text = getCamelCase(citynameCont.text);
+                  getCityData(citynameCont.text);
+                }
               },
               child: Padding(
                 padding: EdgeInsets.all(Sizes().sw * 0.021),
@@ -133,7 +139,7 @@ class _Screen2State extends State<Screen2> {
     FocusManager.instance.primaryFocus?.unfocus();
     // SystemChrome.setEnabledSystemUIMode(SystemUiMode.leanBack);
 
-    bool checked = await CheckInternet.instance.check();
+    bool checked = await checkConnectivityStatus();
     if (checked) {
       if (citynameCont.text.isNotEmpty) {
         providerClass.setShowCityDataLoading(true);
@@ -223,8 +229,12 @@ class _Screen2State extends State<Screen2> {
           CityModel cityModel = CityModel(citynameCont.text,
               currentweathermodel, hourlymodels, dailymodels);
           providerClass.setShowCityDataLoading(false);
-          providerClass.addNewCityModel(cityModel);
 
+          bool isNewCityAdded = providerClass.addNewCityModel(cityModel);
+             providerClass.currentCityIndex = providerClass.cityModels.length - 1;
+          if (!isNewCityAdded) {
+            snack('This city is already added');
+          }
           // setState(() {
           parametervalue.clear();
           parametervalue
@@ -307,44 +317,59 @@ class _Screen2State extends State<Screen2> {
               builder: (BuildContext context, Offset value, Widget? child) {
                 return Transform.translate(
                   offset: value,
-                  child: Container(
-                    height: Sizes().sh * 0.06,
-                    width: Sizes().sw,
-                    margin: EdgeInsets.only(
-                      right: Sizes().sw * 0.04,
-                      left: Sizes().sw * 0.04,
-                      top: Sizes().sw * 0.04,
-                    ),
-                    decoration: BoxDecoration(
-                        color: Constants
-                            .citycolors[i % (Constants.citycolors.length)],
-                        borderRadius: BorderRadius.circular(Sizes().sh * 0.05),
-                        boxShadow: [BoxShadow()]),
-                    child: Row(
-                      children: [
-                        Container(
-                          height: Sizes().sh * 0.06,
-                          width: Sizes().sw * 0.7,
-                          child: FittedBox(
-                            child: Padding(
-                              padding: const EdgeInsets.all(10.0),
-                              child: Text(providerClass.cityModels[i].cityname),
+                  child: InkWell(
+                    onTap: () {
+                      providerClass.setCurrentCityIndex(i);
+
+                      providerClass.setWeathchipindex(0);
+                      List<String> currentCityParametervalue =
+                          providerClass.setParameterValuesForCity(
+                              providerClass.cityModels[i].currentWeatherModel);
+
+                      providerClass.setParamValues(currentCityParametervalue);
+                      providerClass.setSelectedMainTabIndex(0);
+                    },
+                    child: Container(
+                      height: Sizes().sh * 0.06,
+                      width: Sizes().sw,
+                      margin: EdgeInsets.only(
+                        right: Sizes().sw * 0.04,
+                        left: Sizes().sw * 0.04,
+                        top: Sizes().sw * 0.04,
+                      ),
+                      decoration: BoxDecoration(
+                          color: Constants
+                              .citycolors[i % (Constants.citycolors.length)],
+                          borderRadius:
+                              BorderRadius.circular(Sizes().sh * 0.05),
+                          boxShadow: [BoxShadow()]),
+                      child: Row(
+                        children: [
+                          Container(
+                            height: Sizes().sh * 0.06,
+                            width: Sizes().sw * 0.7,
+                            child: FittedBox(
+                              child: Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child:
+                                    Text(providerClass.cityModels[i].cityname),
+                              ),
                             ),
                           ),
-                        ),
-                        Spacer(),
-                        Container(
-                          height: Sizes().sh * 0.08,
-                          width: Sizes().sw * 0.16,
-                          child: FittedBox(
-                            child: IconButton(
-                                onPressed: () {
-                                  providerClass.removeCity(i);
-                                },
-                                icon: Icon(Icons.close)),
-                          ),
-                        )
-                      ],
+                          Spacer(),
+                          Container(
+                            height: Sizes().sh * 0.08,
+                            width: Sizes().sw * 0.16,
+                            child: FittedBox(
+                              child: IconButton(
+                                  onPressed: () {
+                                    providerClass.removeCity(i);
+                                  },
+                                  icon: Icon(Icons.close)),
+                            ),
+                          )
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -354,6 +379,49 @@ class _Screen2State extends State<Screen2> {
                   begin: Offset(0, -(50 * i).toDouble()), end: Offset.zero),
             );
           })),
+    );
+  }
+
+  paramterChipsRow() {
+    double chiph = h * 0.05;
+    return Container(
+      height: chiph + h * 0.02,
+      child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: parameternames.length,
+          itemBuilder: (c, i) {
+            return InkWell(
+              onTap: () {
+                providerClass.setChipIndexForComparingCities(i);
+              },
+              child: Container(
+                height: chiph,
+                margin: EdgeInsets.all(h * 0.01),
+                padding: providerClass.chipIndexForComparingCities == i
+                    ? EdgeInsets.all(h * 0.008)
+                    : EdgeInsets.all(h * 0.012),
+                decoration: BoxDecoration(
+                    border: providerClass.chipIndexForComparingCities == i
+                        ? Border.all(width: 1, color: Colors.black45)
+                        : null,
+                    color: Constants.cardcolors[i],
+                    borderRadius: BorderRadius.circular(h * 0.05),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.grey.withAlpha(150),
+                          blurRadius: 1.5,
+                          offset: Offset(1, 1))
+                    ]),
+                child: FittedBox(
+                  fit: BoxFit.fitHeight,
+                  child: Text(
+                    parameternames[i],
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+              ),
+            );
+          }),
     );
   }
 
@@ -387,86 +455,315 @@ class _Screen2State extends State<Screen2> {
             //     DateTime.fromMillisecondsSinceEpoch(1651314777).toString());
             // EpochDateTime e = EpochDateTime(1651314777);
             // print("epoch is ${e.day}   ${e.year}");
-
-            providerClass.setcompareCitiesTabIndex(1);
+            if (providerClass.cityModels.length > 1 &&
+                !providerClass.showCityDataLoading) {
+              providerClass.setcompareCitiesTabIndex(1);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('Please add atleast 2 cities'),
+                action: SnackBarAction(
+                    label: 'CLOSE',
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    }),
+              ));
+            }
           },
           child: Text("Compare All"),
           style: ButtonStyle(
               backgroundColor: providerClass.cityModels.length < 2
-                  ? MaterialStateProperty.all(Colors.blueGrey.shade300)
-                  : MaterialStateProperty.all(
-                      Color.fromARGB(255, 146, 50, 50))),
+                  ? MaterialStateProperty.all(Constants.chipNoNColor)
+                  : MaterialStateProperty.all(Constants.chipColor)),
         )
       ],
     );
   }
 
+  void snack(String s) {
+    SnackBar snackBar = SnackBar(content: Text(s));
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
   Widget tab1() {
     // return Container(
-    //   height: 300, 
+    //   height: 300,
     //   width: 300,
     //   color: Colors.purple,
-    //   child: Column( 
-    //     children: [Text("dsd"), 
-    //     Text("jdk"), 
-    //     Spacer(), 
-        
-        
-    //     Container( 
-    //       height:10, 
+    //   child: Column(
+    //     children: [Text("dsd"),
+    //     Text("jdk"),
+    //     Spacer(),
+
+    //     Container(
+    //       height:10,
     //       color: Colors.red,
     //     )],
     //   ),
     // );
+    print('tab1 called ${Random().nextInt(500)}');
+    print(
+        'lengg daily ${providerClass.cityModels[0].dailyWeatherModels.length} /  hour ${providerClass.cityModels[0].hourlyWeatherModels.length}');
+
+    List<List<List<List<double>>>> allParamtersYvalueswrtWeatherTime = [];
+    // List<String> parameternames = [
+    //   'Temperature',
+    //   'Dew Point',
+    //   'Pressure',
+    //   'Humidity',
+    //   'Wind Speed'
+    // ];
+    for (var i = 0; i < parameternames.length; i++) {
+      allParamtersYvalueswrtWeatherTime =
+          addValues(allParamtersYvalueswrtWeatherTime, i);
+      print('addle ${allParamtersYvalueswrtWeatherTime.length}');
+      // switch (parameternames[i]) {
+      //   case 'Temperature':
+
+      //     break;
+      //   default:
+      // }
+    }
+
+    // print(
+    //     'tab1 called already ${yvalueswrtWeatherTime[providerClass.weathchipindex][0].length}  ${Random().nextInt(500)}');
     return Container(
-      height: Sizes().sh * 0.7,
-      color: Color.fromARGB(255, 228, 191, 207),
+      height: Sizes().sh * 0.8,
+      color: Color.fromARGB(255, 244, 239, 241),
       child: Column(
         children: [
+          paramterChipsRow(),
+          citiesColorIndex(),
           Spacer(),
-          Center(
-            child: Text(
-                "${providerClass.lineHoverPoint}  // ${providerClass.temptext}"),
+          MultiBarChart(
+              allParamtersYvalueswrtWeatherTime[providerClass
+                  .chipIndexForComparingCities][providerClass.weathchipindex],
+              w,
+              h * 0.55),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              weatherChip(h, " Current ", 0),
+              weatherChip(h, " Hourly ", 1),
+              weatherChip(h, " Daily ", 2),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: IconButton(
+                    onPressed: () {
+                      providerClass.setcompareCitiesTabIndex(0);
+                    },
+                    icon: Icon(Icons.close)),
+              )
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget weatherChip(double h, String weathername, int i) {
+    return InkWell(
+      onTap: () {
+        providerClass.setWeathchipindex(i);
+        providerClass.setShrinkFactor(1.0);
+        // myAnimationController.reset();
+        // myAnimationController.forward();
+      },
+      child: Container(
+        height: h * 0.05,
+        margin: EdgeInsets.all(h * 0.01),
+        padding: EdgeInsets.all(h * 0.01),
+        decoration: BoxDecoration(
+            color: providerClass.weathchipindex == i
+                ? Constants.chipColor
+                : Constants.chipNoNColor,
+            borderRadius: BorderRadius.circular(h * 0.025),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.grey, blurRadius: 1.5, offset: Offset(1, 1))
+            ]),
+        child: FittedBox(
+          fit: BoxFit.fitHeight,
+          child: Text(
+            weathername,
+            style: TextStyle(
+                color: providerClass.weathchipindex == i
+                    ? Constants.chipTextColor
+                    : Constants.chipTextNONColor),
           ),
-          Spacer(),
-          LineChart(
-              xaxislist: providerClass.cityModels[0].hourlyWeatherModels
-                  .map((e) => Text(e.epTime.hour.toString()))
-                  .toList(),
-              yaxislist:
-                  providerClass.cityModels[0].hourlyWeatherModels.map((e) {
-                switch (providerClass.daysChipIndex) {
-                  case 0:
-                    return e.temp;
+        ),
+      ),
+    );
+  }
 
-                  case 1:
-                    return e.dew;
+  getLineChart() {
+    return LineChart(
+        xaxislist: providerClass.cityModels[0].hourlyWeatherModels
+            .map((e) => Text(e.epTime.hour.toString()))
+            .toList(),
+        yaxislist: providerClass.cityModels[0].hourlyWeatherModels.map((e) {
+          switch (providerClass.daysChipIndex) {
+            case 0:
+              return e.temp;
 
-                  case 2:
-                    return e.pressure;
+            case 1:
+              return e.dew;
 
-                  case 3:
-                    return e.humidity;
+            case 2:
+              return e.pressure;
 
-                  case 4:
-                    return e.windspeed;
+            case 3:
+              return e.humidity;
 
-                  default:
-                    return e.temp;
-                }
-              }).toList(),
-              h: Sizes().sh * 0.7,
-              w: Sizes().sw * 0.95,
-              xh: 0.10,
-              xaxisname: "Time",
-              yaxisname: parameternames[providerClass.hourlyChipIndex]),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: IconButton(
-                onPressed: () {
-                  providerClass.setcompareCitiesTabIndex(0);
-                },
-                icon: Icon(Icons.close)),
+            case 4:
+              return e.windspeed;
+
+            default:
+              return e.temp;
+          }
+        }).toList(),
+        h: Sizes().sh * 0.7,
+        w: Sizes().sw * 0.95,
+        xh: 0.10,
+        xaxisname: "Time",
+        yaxisname: parameternames[providerClass.hourlyChipIndex] +
+            "( ${providerClass.units[providerClass.hourlyChipIndex]} )");
+  }
+
+  List<List<List<List<double>>>> addValues(
+      List<List<List<List<double>>>> allParamtersYvalueswrtWeatherTime, int i) {
+    List<List<List<List<double>>>> l =
+        List.from(allParamtersYvalueswrtWeatherTime);
+    List<List<List<double>>> yvalueswrtWeatherTime = [];
+    List<List<double>> yAxisValuesOfCitiesCurrent = [];
+    providerClass.cityModels.forEach((e) {
+      switch (i) {
+        case 0:
+          yAxisValuesOfCitiesCurrent.add([e.currentWeatherModel.temp]);
+          break;
+        case 1:
+          yAxisValuesOfCitiesCurrent.add([e.currentWeatherModel.dew]);
+          break;
+        case 2:
+          yAxisValuesOfCitiesCurrent.add([e.currentWeatherModel.pressure]);
+          break;
+
+        case 3:
+          yAxisValuesOfCitiesCurrent.add([e.currentWeatherModel.humidity]);
+          break;
+        case 4:
+          yAxisValuesOfCitiesCurrent.add([e.currentWeatherModel.windspeed]);
+          break;
+        default:
+      }
+    });
+    List<List<double>> yAxisValuesOfCitiesHourly = [];
+    providerClass.cityModels.forEach((e) {
+      print('eee city in hourly ${i}------------ ${e.cityname}');
+      // yAxisValuesOfCitiesHourly
+      //     .add(e.hourlyWeatherModels.map((e) => e.temp).toList());
+
+      switch (i) {
+        case 0:
+          yAxisValuesOfCitiesHourly
+              .add(e.hourlyWeatherModels.map((e) => e.temp).toList());
+          break;
+        case 1:
+          yAxisValuesOfCitiesHourly
+              .add(e.hourlyWeatherModels.map((e) => e.dew).toList());
+          break;
+        case 2:
+          yAxisValuesOfCitiesHourly
+              .add(e.hourlyWeatherModels.map((e) => e.pressure).toList());
+          break;
+
+        case 3:
+          yAxisValuesOfCitiesHourly
+              .add(e.hourlyWeatherModels.map((e) => e.humidity).toList());
+          break;
+        case 4:
+          yAxisValuesOfCitiesHourly
+              .add(e.hourlyWeatherModels.map((e) => e.windspeed).toList());
+          break;
+        default:
+      }
+    });
+
+    List<List<double>> yAxisValuesOfCitiesDaily = [];
+    providerClass.cityModels.forEach((e) {
+      print('eee city in daily------------ ${e.cityname}');
+      // yAxisValuesOfCitiesDaily.add(e.dailyWeatherModels.map((ee) {
+      //   print('eee ${ee.temp}');
+      //   return ee.temp;
+      // }).toList());
+
+      switch (i) {
+        case 0:
+          yAxisValuesOfCitiesDaily
+              .add(e.dailyWeatherModels.map((e) => e.temp).toList());
+          break;
+        case 1:
+          yAxisValuesOfCitiesDaily
+              .add(e.dailyWeatherModels.map((e) => e.dew).toList());
+          break;
+        case 2:
+          yAxisValuesOfCitiesDaily
+              .add(e.hourlyWeatherModels.map((e) => e.pressure).toList());
+          break;
+
+        case 3:
+          yAxisValuesOfCitiesDaily
+              .add(e.dailyWeatherModels.map((e) => e.humidity).toList());
+          break;
+        case 4:
+          yAxisValuesOfCitiesDaily
+              .add(e.dailyWeatherModels.map((e) => e.windspeed).toList());
+          break;
+        default:
+      }
+    });
+    yvalueswrtWeatherTime.addAll([
+      yAxisValuesOfCitiesCurrent,
+      yAxisValuesOfCitiesHourly,
+      yAxisValuesOfCitiesDaily
+    ]);
+    l.add(yvalueswrtWeatherTime);
+    return l;
+  }
+
+  citiesColorIndex() {
+    return Container(
+      height: h * 0.18,
+      width: w,
+      // color: Colors.purple.shade100,
+      child: SingleChildScrollView(
+        child: Wrap(
+          children: [
+            // ...(List.generate(50, (i) => cityBox((i*100).toString() ,i))),
+            ...(providerClass.cityModels.map((e) {
+              int i = providerClass.cityModels.indexOf(e);
+              return cityBox(e.cityname, i);
+            }))
+          ],
+        ),
+      ),
+    );
+  }
+
+  cityBox(String cityname, int i) {
+    return Padding(
+      padding: EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            margin: EdgeInsets.all(w * 0.01),
+            height: w * 0.05,
+            width: w * 0.05,
+            color: Constants.citycolors[i % Constants.citycolors.length],
+          ),
+          Text(
+            cityname,
+            style: TextStyle(fontSize: w * 0.04, fontWeight: FontWeight.w600),
           )
         ],
       ),

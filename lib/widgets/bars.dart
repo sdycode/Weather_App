@@ -38,8 +38,9 @@ class bars extends StatefulWidget {
 // 08026599990
 class _barsState extends State<bars> {
   List yl = [];
-  int span = 0;
+  double span = 0;
   int l = 0;
+
   int max = 0;
   int min = 0;
   @override
@@ -50,17 +51,23 @@ class _barsState extends State<bars> {
   }
 
   late ProviderClass providerClass;
-
+ScrollController _listController = ScrollController();
+@override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    _listController.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     print("Afer init  in build ${widget.yaxislist.length}");
     providerClass = Provider.of<ProviderClass>(context);
     l = math.min(widget.xaxislist.length, widget.yaxislist.length);
-
+    print('yxx ${widget.yaxislist}');
     yl.clear();
     widget.yaxislist.forEach((element) {
       print("eell" + element.toString());
-      yl.add(element.toInt());
+      yl.add(element.toDouble());
     });
 
     span = getSpan(yl);
@@ -80,6 +87,9 @@ class _barsState extends State<bars> {
               height: widget.h,
               width: widget.w,
               child: GestureDetector(
+                onTap: () {
+                   print("pan tap  ");
+                },
                 onPanUpdate: (d) {
                   print("pan update ${d.localPosition} ");
                   if (providerClass.shrinkFactor != 1.0) {
@@ -97,7 +107,7 @@ class _barsState extends State<bars> {
                                   (providerClass.shrinkFactor)))
                           .toInt();
                       if (xno >= l) {
-                        xno = l-1;
+                        xno = l - 1;
                       }
                       providerClass.setbarOverlayIndex(xno);
                       providerClass.setShowOverlayPoint(true);
@@ -110,6 +120,8 @@ class _barsState extends State<bars> {
                   providerClass.setShowOverlayPoint(false);
                 },
                 child: ListView.builder(
+                  controller: _listController,
+                physics: providerClass.shrinkFactor != 1.0 ? NeverScrollableScrollPhysics(): ClampingScrollPhysics() ,
                   scrollDirection: Axis.horizontal,
                   itemCount: l,
                   itemBuilder: (c, i) => Container(
@@ -126,25 +138,30 @@ class _barsState extends State<bars> {
                           TweenAnimationBuilder<double>(
                             builder: (BuildContext context, double? value,
                                 Widget? child) {
+                              print('bar color ${widget.barColor}');
+                              print(
+                                  "@ $i   ${(widget.yaxislist[i] / span)}  /  ${widget.yaxislist[i]} /  $span");
                               return Container(
                                 height: widget.h * (1 - widget.xh),
                                 // color: Colors.amber,
                                 child: Column(
                                   children: [
                                     Spacer(),
-                                    FittedBox(
-                                      child:
-                                          Text(widget.yaxislist[i].toString()),
-                                    ),
+                                    // FittedBox(
+                                    //   child: Text(
+                                    //       getTrimmedNo(widget.yaxislist[i], 4)),
+                                    // ),
                                     Container(
                                       width: (widget.w * 0.2 * 0.5) *
                                           (providerClass.shrinkFactor),
                                       height: providerClass.animateBar
-                                          ? value
-                                          : (widget.yaxislist[i] / span) *
-                                              (widget.h *
-                                                  (1 - widget.xh) *
-                                                  (0.7)),
+                                          ? math.max(value!, 0)
+                                          : math.max(
+                                              0,
+                                              (widget.yaxislist[i] / span) *
+                                                  (widget.h *
+                                                      (1 - widget.xh) *
+                                                      (0.7))),
                                       color:
                                           providerClass.barOverlayIndex == i &&
                                                   providerClass.shrinkFactor !=
@@ -166,7 +183,8 @@ class _barsState extends State<bars> {
                             ),
                           ),
                           Container(
-                              height: widget.h * widget.xh - 20 + 8,
+                              height:
+                                  math.max(0, widget.h * widget.xh - 20 + 8),
                               width: (widget.w * 0.2 * 0.5) *
                                   (providerClass.shrinkFactor),
                               color: Color.fromARGB(0, i * 10, 107, 102),
@@ -175,40 +193,37 @@ class _barsState extends State<bars> {
                                 child: FittedBox(
                                   child: Padding(
                                     padding: EdgeInsets.all(5),
-                                    child: (widget.xaxislist[i]),
+                                    // child: (widget.xaxislist[i]),
                                   ),
                                 ),
                               ))
                         ],
-                      )
+                      )),
+                ),
+              ),
+            ),
+            Positioned(
+              left:0,
+              bottom: widget.h * 0.01,
+              child: Container(
+                width: widget.w*(1-widget.xw)*0.98,
+                // color: Colors.red,
+                child: Center(
 
-                      // Stack(children: [
-                      //   Align(
-                      //     alignment: Alignment.bottomCenter,
-                      //     child: Container(
-                      //       height: widget.h * widget.xh,
-                      //       width: widget.w * 0.2 * 0.5,
-                      //       color: Color.fromARGB(255, i * 10, 107, 102),
-                      //     ),
-                      //   ),
-                      //   Padding(
-                      //     padding: EdgeInsets.only(bottom: widget.h * widget.xh-6),
-                      //     child: Align(
-                      //         alignment: Alignment.bottomCenter,
-                      //         child:
-
-                      ),
-                  // )
-                  // ]),
-                  // //  (widget.yaxislist[i] / span) * (widget.h),
-
-                  // )
+                  child: Text(
+                    
+                    providerClass
+                        .cityModels[providerClass.currentCityIndex].cityname,
+                        textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: widget.w * 0.06, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
             ),
             providerClass.showOverlayPoint
                 ? Positioned(
-                    left: widget.w * 0.2,
+                    left: widget.w * 0.3,
                     top: 30,
                     child: Container(
                         decoration: BoxDecoration(
@@ -220,15 +235,15 @@ class _barsState extends State<bars> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              (widget.xaxislist[providerClass.barOverlayIndex]
-                                      as Text)
-                                  .data
-                                  .toString(),
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: widget.h * 0.05),
-                            ),
+                            // Text(
+                            //   (widget.xaxislist[providerClass.barOverlayIndex]
+                            //           as Text)
+                            //       .data
+                            //       .toString(),
+                            //   style: TextStyle(
+                            //       fontWeight: FontWeight.bold,
+                            //       fontSize: widget.h * 0.05),
+                            // ),
                             Center(
                               child: FittedBox(
                                 child:
@@ -236,10 +251,10 @@ class _barsState extends State<bars> {
                                     //     "${providerClass.hoverPoint.dx.toStringAsFixed(1)} / ${providerClass.hoverPoint.dy.toStringAsFixed(1)} / ${widget.w * (1 - widget.yw)}  / ${providerClass.barOverlayIndex} "),
 
                                     Text(
-                                  " -> " +
+                                  getTrimmedNo(
                                       widget.yaxislist[
-                                              providerClass.barOverlayIndex]
-                                          .toString(),
+                                          providerClass.barOverlayIndex],
+                                      4),
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: widget.h * 0.05),
@@ -275,9 +290,10 @@ class _barsState extends State<bars> {
         ));
   }
 
-  int getSpan(List yll) {
-    int min = 0;
-    int max = 0;
+  double getSpan(List yll) {
+    double min = 0;
+    double max = 0;
+    print('yyyy ${yll} & $yl');
     for (int i in List.generate(60, (index) => index)) {
       print(
           "=====================================span= = ${math.Random().nextInt(500000)}");
@@ -296,5 +312,19 @@ class _barsState extends State<bars> {
     return max - min;
   }
 
-
+  String getTrimmedNo(double yaxislist, int n) {
+    String ans = yaxislist
+        .toStringAsFixed(4)
+        .replaceAll('0', ' ')
+        .trim()
+        .replaceAll(' ', '0');
+    if (ans.endsWith('.')) {
+      ans = ans.substring(0, ans.characters.length - 1);
+    }
+    if (ans.startsWith('.')) {
+      ans = '0' + ans;
+      // ans = ans.substring(1, ans.characters.length);
+    }
+    return ans;
+  }
 }

@@ -19,10 +19,8 @@ class WeatherModel {
   late double windspeed;
   late double time;
   late EpochDateTime epTime;
+   String imgurl ='noimg';
 
   WeatherModel(this.descrp, this.icon, this.temp, this.dew, this.pressure,
-      this.humidity, this.windspeed, this.time, 
-      
-      this.epTime
-      );
+      this.humidity, this.windspeed, this.time, this.epTime);
 }
